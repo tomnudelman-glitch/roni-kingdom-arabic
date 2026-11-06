@@ -1,0 +1,668 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>ממלכת רוני</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="theme-color" content="#0E7A6F">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800&family=Noto+Naskh+Arabic:wght@400;600&display=swap">
+<style>
+/* Layout concept: one phone-width column; a teal opening screen, then white cards on a cool grey ground. */
+:root{
+  --bg:#F3F5F7; --surface:#FFFFFF; --surface-2:#E3E8EE; --line:#D3DAE3;
+  --ink:#12203A; --muted:#566074;
+  --accent:#0E7A6F; --on-accent:#FFFFFF; --accent-soft:#DDF1EE; --accent-ink:#0A5C53;
+  --bad:#B4381F; --bad-bg:#FBE5E0; --bad-ink:#8E2B16;
+  --warn-bg:#FDF0D5; --warn-ink:#7A4B00; --shadow:#DCE2EA;
+  --ui:'Assistant',system-ui,'Segoe UI',Arial,sans-serif;
+  --ar:'Noto Naskh Arabic','Geeza Pro','Traditional Arabic','Segoe UI',serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E1620; --surface:#17222E; --surface-2:#243242; --line:#2E3E50;
+    --ink:#E9EEF4; --muted:#A9B5C4;
+    --accent:#3CC4B2; --on-accent:#062B27; --accent-soft:#143D38; --accent-ink:#8FE6DA;
+    --bad:#FF8A72; --bad-bg:#3D1D17; --bad-ink:#FFB4A3;
+    --warn-bg:#3A2E10; --warn-ink:#F2CB7A; --shadow:#0A1118;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E1620; --surface:#17222E; --surface-2:#243242; --line:#2E3E50;
+  --ink:#E9EEF4; --muted:#A9B5C4;
+  --accent:#3CC4B2; --on-accent:#062B27; --accent-soft:#143D38; --accent-ink:#8FE6DA;
+  --bad:#FF8A72; --bad-bg:#3D1D17; --bad-ink:#FFB4A3;
+  --warn-bg:#3A2E10; --warn-ink:#F2CB7A; --shadow:#0A1118;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{height:100%}
+body{
+  min-height:100%; margin:0; background:var(--bg); color:var(--ink);
+  font-family:var(--ui); font-size:16px; line-height:1.45;
+  padding-block:16px 32px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  -webkit-text-size-adjust:100%;
+}
+body.on-start{background:var(--accent);color:var(--on-accent)}
+#app{max-width:460px;margin:0 auto}
+button,select{font:inherit;color:inherit}
+button{cursor:pointer}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--accent-ink);outline-offset:2px}
+body.on-start :focus-visible{outline-color:var(--on-accent)}
+h1,h2,h3,p{margin:0}
+h1,h2,h3{text-wrap:balance}
+.ar{font-family:var(--ar);direction:rtl;line-height:1.8}
+.muted{color:var(--muted)}
+.stack{display:flex;flex-direction:column;gap:14px}
+.stack-s{display:flex;flex-direction:column;gap:10px}
+.row2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+
+/* top bar */
+.bar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+.icon-btn{width:44px;height:44px;flex:none;border-radius:22px;background:var(--surface);border:0;color:var(--ink);display:flex;align-items:center;justify-content:center;text-decoration:none}
+.bar-title{font-size:18px;font-weight:700}
+.counter{min-width:44px;text-align:left;font-size:15px;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums}
+.progress{height:6px;border-radius:3px;background:var(--surface-2);margin-bottom:14px;overflow:hidden}
+.progress>i{display:block;height:100%;background:var(--accent);border-radius:3px}
+
+/* small pieces */
+.chip{display:inline-block;font-size:13px;font-weight:600;background:var(--accent-soft);color:var(--accent-ink);padding:4px 10px;border-radius:12px}
+.chip.warn{background:var(--warn-bg);color:var(--warn-ink)}
+.seg{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.seg button{min-height:40px;padding:0 14px;border-radius:20px;border:1px solid var(--line);background:var(--surface);color:var(--muted);font-weight:600;font-size:14px}
+.seg button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent-ink);border-color:var(--accent)}
+.lbl{font-size:14px;font-weight:600;color:var(--muted)}
+
+/* buttons */
+.btn{min-height:56px;border-radius:16px;border:0;font-weight:700;font-size:17px;padding:0 20px;display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;width:100%}
+.btn-primary{background:var(--accent);color:var(--on-accent)}
+.btn-soft{background:var(--surface);color:var(--ink)}
+.btn-bad{background:var(--bad-bg);color:var(--bad-ink)}
+.btn[disabled]{background:var(--surface-2);color:var(--muted);cursor:default}
+
+/* start */
+.start{min-height:calc(100vh - 90px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;text-align:center}
+.start h1{font-size:36px;line-height:1.15;font-weight:800}
+.start .sub{font-size:30px;line-height:1.2;font-weight:700}
+.start .btn{width:auto;padding:0 44px;background:var(--on-accent);color:var(--accent-ink);font-size:19px;margin-top:8px}
+
+/* home */
+.home-head h1{font-size:28px;line-height:1.2;font-weight:700}
+.hero{background:var(--accent);color:var(--on-accent);border-radius:20px;padding:20px;display:flex;flex-direction:column;gap:14px}
+.hero .t{font-size:22px;font-weight:700;line-height:1.25}
+.hero .btn{background:var(--on-accent);color:var(--accent-ink);align-self:flex-start;width:auto;min-height:48px;font-size:16px;padding:0 22px}
+.field{display:flex;flex-direction:column;gap:6px}
+.sel{width:100%;min-height:48px;border-radius:14px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:0 12px}
+.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.tile{background:var(--surface);border-radius:18px;padding:14px;border:0;text-align:start;display:flex;flex-direction:column;gap:10px;text-decoration:none;color:var(--ink)}
+.tile .ico{width:40px;height:40px;border-radius:20px;background:var(--accent-soft);color:var(--accent-ink);display:flex;align-items:center;justify-content:center}
+.tile .n{font-size:17px;font-weight:700}
+.tile .d{font-size:13px;color:var(--muted)}
+.unit{background:var(--surface);border-radius:16px;padding:14px 16px;border:2px solid transparent;width:100%;text-align:start;display:flex;flex-direction:column;gap:10px}
+.unit[aria-pressed="true"]{border-color:var(--accent)}
+.unit .top{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.unit .nm{font-size:16px;font-weight:700}
+.unit .meta{font-size:13px;color:var(--muted);flex:none}
+.foot{font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:10px}
+.link-btn{background:none;border:0;padding:8px 0;color:var(--muted);text-decoration:underline;text-align:start;font-size:14px;align-self:flex-start;min-height:40px}
+
+/* flashcards */
+.flash{width:100%;min-height:330px;border:0;border-radius:28px;background:var(--surface);color:var(--ink);box-shadow:0 2px 0 var(--shadow);padding:24px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center}
+.big-ar{font-size:68px}
+.big-he{font-size:48px;font-weight:700;line-height:1.2}
+.ex{width:100%;border-top:1px solid var(--line);padding-top:14px;display:flex;flex-direction:column;align-items:center;gap:2px}
+.ex .ex-ar{font-size:26px}
+.note{font-size:14px;color:var(--muted);text-align:center;min-height:56px;display:flex;align-items:center;justify-content:center}
+
+/* matching */
+.mgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:14px;align-items:start}
+.mbtn{width:100%;min-height:68px;border:2px solid transparent;border-radius:16px;background:var(--surface);color:var(--ink);padding:6px 8px;display:flex;align-items:center;justify-content:center;gap:8px;text-align:center}
+.mbtn.he{font-size:19px;font-weight:600;line-height:1.25}
+.mbtn.ar{font-size:30px}
+.mbtn.sel{border-color:var(--accent)}
+.mbtn.done{background:var(--accent-soft);color:var(--accent-ink);cursor:default}
+.mbtn.bad{background:var(--bad-bg);color:var(--bad-ink);border-color:var(--bad)}
+.stat{display:flex;align-items:center;justify-content:space-between;background:var(--surface);border-radius:16px;padding:14px 16px}
+.stat b{font-size:20px;font-variant-numeric:tabular-nums}
+
+/* quiz */
+.qcard{background:var(--surface);border-radius:24px;padding:22px 20px;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center}
+.qcard .q-ar{font-size:56px}
+.qcard .q-ar.sentence{font-size:32px;line-height:1.9}
+.qcard .q-he{font-size:36px;font-weight:700;line-height:1.25}
+.opt{width:100%;min-height:56px;border-radius:16px;border:2px solid transparent;background:var(--surface);color:var(--ink);padding:8px 18px;text-align:start;font-size:19px;font-weight:600;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.opt.ar{font-size:28px;font-weight:400}
+.opt.ok{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-ink)}
+.opt.bad{background:var(--bad-bg);border-color:var(--bad);color:var(--bad-ink)}
+.opt.dim{color:var(--muted)}
+.feedback{background:var(--surface);border-radius:18px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.feedback .v{font-size:16px;font-weight:700}
+
+/* principles */
+.pcard{background:var(--surface);border-radius:24px;padding:20px;display:flex;flex-direction:column;gap:14px}
+.pcard h2{font-size:24px;line-height:1.2}
+.pcard .desc{font-size:17px}
+.exrow{border-top:1px solid var(--line);padding:8px 0;font-size:26px}
+
+/* sentence builder */
+.slot-area{background:var(--surface);border-radius:24px;padding:16px;min-height:150px;display:flex;flex-wrap:wrap;gap:10px;align-content:flex-start;direction:rtl}
+.tok{min-height:56px;border:0;border-radius:14px;background:var(--surface);color:var(--ink);font-family:var(--ar);font-size:28px;line-height:1.8;padding:0 18px;box-shadow:0 2px 0 var(--shadow)}
+.tok.placed{background:var(--accent-soft);color:var(--accent-ink);box-shadow:none}
+.tok.ok{background:var(--accent-soft);color:var(--accent-ink);box-shadow:none}
+.tok.bad{background:var(--bad-bg);color:var(--bad-ink);box-shadow:none}
+.tok[disabled]{cursor:default}
+.bank{display:flex;flex-wrap:wrap;gap:10px;direction:rtl}
+.ghost{min-height:52px;width:84px;border:2px dashed var(--line);border-radius:14px}
+.sent-he{font-size:26px;font-weight:700;line-height:1.3}
+
+/* results */
+.res{background:var(--surface);border-radius:24px;padding:28px 20px;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center}
+.res .big{font-size:54px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
+.res .t{font-size:22px;font-weight:700}
+
+@media (prefers-reduced-motion: no-preference){
+  .btn,.opt,.mbtn,.tok,.unit,.tile{transition:background-color .12s,border-color .12s}
+}
+</style>
+
+</head>
+<body>
+<div id="app" dir="rtl" lang="he"><main id="view" aria-live="off"></main></div>
+
+<script>
+(function(){
+'use strict';
+var DB = {"words":[{"id":"w001","arabic":"دَار","hebrew":"בית / דירה","page":3,"unit":"אותיות ארז דוד"},{"id":"w002","arabic":"دُور","hebrew":"דירות","page":3,"unit":"אותיות ארז דוד"},{"id":"w003","arabic":"دَاوُد","hebrew":"דוד (שם פרטי)","page":3,"unit":"אותיות ארז דוד"},{"id":"w004","arabic":"وِدَاد","hebrew":"ודאד (שם פרטי)","page":3,"unit":"אותיות ארז דוד"},{"id":"w005","arabic":"دُرُوز","hebrew":"דרוזים","page":3,"unit":"אותיות ארז דוד"},{"id":"w006","arabic":"دَوْر","hebrew":"תפקיד / תור","page":3,"unit":"אותיות ארז דוד"},{"id":"w007","arabic":"زَارَ","hebrew":"ביקר","page":3,"unit":"אותיות ארז דוד"},{"id":"w008","arabic":"أَوْ","hebrew":"או","page":4,"unit":"אותיות ארז דוד"},{"id":"w009","arabic":"وَ","hebrew":"ו-","page":4,"unit":"אותיות ארז דוד"},{"id":"w010","arabic":"بَاب","hebrew":"דלת","page":5,"unit":"אותיות בנתי"},{"id":"w011","arabic":"أَبْوَاب","hebrew":"דלתות","page":5,"unit":"אותיות בנתי"},{"id":"w012","arabic":"بَيْت","hebrew":"בית","page":5,"unit":"אותיות בנתי"},{"id":"w013","arabic":"بِنْت","hebrew":"בת / ילדה","page":5,"unit":"אותיות בנתי"},{"id":"w014","arabic":"بَنَات","hebrew":"בנות","page":5,"unit":"אותיות בנתי"},{"id":"w015","arabic":"بَدَوِيّ","hebrew":"בדואי","page":5,"unit":"אותיות בנתי"},{"id":"w016","arabic":"دُرْزِيّ","hebrew":"דרוזי","page":5,"unit":"אותיות בנתי"},{"id":"w017","arabic":"أُورُوبّا","hebrew":"אירופה","page":5,"unit":"אותיות בנתי"},{"id":"w018","arabic":"بَرْد","hebrew":"קור","page":5,"unit":"אותיות בנתי"},{"id":"w019","arabic":"إِبْن","hebrew":"בן","page":5,"unit":"אותיות בנתי"},{"id":"w020","arabic":"زَيْت","hebrew":"שמן","page":5,"unit":"אותיות בנתי"},{"id":"w021","arabic":"زَيْد","hebrew":"זייד (שם פרטי)","page":6,"unit":"אותיות בנתי"},{"id":"w022","arabic":"رُوت","hebrew":"רות (שם פרטי)","page":6,"unit":"אותיות בנתי"},{"id":"w023","arabic":"نُور","hebrew":"אור, וגם שם פרטי (נור)","page":6,"unit":"אותיות בנתי"},{"id":"w024","arabic":"نُورِي","hebrew":"נורי (שם פרטי)","page":6,"unit":"אותיות בנתי"},{"id":"w025","arabic":"نَار","hebrew":"אש","page":6,"unit":"אותיות בנתי"},{"id":"w026","arabic":"ثِيَاب","hebrew":"בגדים","page":6,"unit":"אותיות בנתי"},{"id":"w027","arabic":"بَيَان","hebrew":"הודעה / גילוי דעת","page":6,"unit":"אותיות בנתי"},{"id":"w028","arabic":"أَنَا","hebrew":"אני","page":6,"unit":"אותיות בנתי"},{"id":"w029","arabic":"أَنْتَ","hebrew":"אתה","page":6,"unit":"אותיות בנתי"},{"id":"w030","arabic":"هُوَ","hebrew":"הוא","page":7,"unit":"האות ה"},{"id":"w031","arabic":"هِيَ","hebrew":"היא","page":7,"unit":"האות ה"},{"id":"w032","arabic":"هٰذَا","hebrew":"זה / הזה (לזכר)","page":7,"unit":"האות ה"},{"id":"w033","arabic":"هٰذِهِ","hebrew":"זאת / הזאת (לנקבה)","page":7,"unit":"האות ה"},{"id":"w034","arabic":"هَرَبَ","hebrew":"ברח","page":7,"unit":"האות ה"},{"id":"w035","arabic":"نَهْر","hebrew":"נהר","page":7,"unit":"האות ה"},{"id":"w036","arabic":"يَهُودِيّ","hebrew":"יהודי","page":7,"unit":"האות ה"},{"id":"w037","arabic":"بِهِ","hebrew":"בו / בתוכו","page":7,"unit":"האות ה"},{"id":"w038","arabic":"بَدَأَ","hebrew":"התחיל","page":10,"unit":"סיכום מילים"},{"id":"w039","arabic":"وَزِير","hebrew":"שר","page":10,"unit":"סיכום מילים"},{"id":"w040","arabic":"وُزَرَاء","hebrew":"שרים","page":10,"unit":"סיכום מילים"},{"id":"w041","arabic":"أَنْتِ","hebrew":"את","page":11,"unit":"פועל בעבר"},{"id":"w043","arabic":"هَلْ","hebrew":"האם (מילת שאלה)","page":12,"unit":"אותיות م ل ك וסימן הנקבה"},{"id":"w044","arabic":"مِنْ","hebrew":"מ- / מן","page":12,"unit":"אותיות م ل ك וסימן הנקבה"},{"id":"w045","arabic":"مَا","hebrew":"מה. לפני פועל בעבר: שלילה","page":12,"unit":"אותיות م ل ك וסימן הנקבה"},{"id":"w046","arabic":"مَاذَا","hebrew":"מה (צורת שאלה נוספת)","page":12,"unit":"אותיות م ل ك וסימן הנקבה"},{"id":"w047","arabic":"هَامّ","hebrew":"חשוב","page":12,"unit":"אותיות م ل ك וסימן הנקבה"},{"id":"w048","arabic":"لَا","hebrew":"לא","page":12,"unit":"אותיות م ل ك וסימן הנקבה"},{"id":"w049","arabic":"كَلْب","hebrew":"כלב","page":12,"unit":"אותיות م ل ك וסימן הנקבה"},{"id":"w050","arabic":"مَلِك","hebrew":"מלך","page":12,"unit":"אותיות م ل ك וסימן הנקבה"},{"id":"w051","arabic":"مَلِكَة","hebrew":"מלכה","page":12,"unit":"אותיות م ل ك וסימן הנקבה"},{"id":"w052","arabic":"بَلَد","hebrew":"ארץ / מדינה","page":12,"unit":"אותיות م ل ك וסימן הנקבה"},{"id":"w053","arabic":"بِلَاد","hebrew":"ארצות","page":12,"unit":"אותיות م ل ك וסימן הנקבה"},{"id":"w054","arabic":"دَوْلَة","hebrew":"מדינה","page":12,"unit":"אותיות م ل ك וסימן הנקבה"},{"id":"w055","arabic":"مَدِينَة","hebrew":"עיר","page":13,"unit":"אותיות م ل ك וסימן הנקבה"},{"id":"w056","arabic":"كَلِمَة","hebrew":"מילה","page":13,"unit":"אותיות م ل ك וסימן הנקבה"},{"id":"w057","arabic":"هُنَا","hebrew":"כאן","page":13,"unit":"אותיות م ل ك וסימן הנקבה"},{"id":"w058","arabic":"هُنَاكَ","hebrew":"שם","page":13,"unit":"אותיות م ل ك וסימן הנקבה"},{"id":"w059","arabic":"كَبِيرَة","hebrew":"גדולה","page":13,"unit":"אותיות م ل ك וסימן הנקבה"},{"id":"w060","arabic":"مَرْيَم","hebrew":"מרים (שם פרטי)","page":13,"unit":"אותיות م ل ك וסימן הנקבה"},{"id":"w061","arabic":"وَلَد","hebrew":"ילד","page":13,"unit":"אותיות م ل ك וסימן הנקבה"},{"id":"w062","arabic":"كَتَبَ","hebrew":"כתב","page":13,"unit":"אותיות م ل ك וסימן הנקבה"},{"id":"w063","arabic":"رَأَى","hebrew":"ראה","page":14,"unit":"ال הידיעה ושמות"},{"id":"w064","arabic":"وَزِيرَة","hebrew":"שרה","page":14,"unit":"ال הידיעה ושמות"},{"id":"w065","arabic":"قَرَأَ","hebrew":"קרא","page":16,"unit":"אותיות ف ق"},{"id":"w066","arabic":"فَهِمَ","hebrew":"הבין","page":16,"unit":"אותיות ف ق"},{"id":"w067","arabic":"كَانَ","hebrew":"היה","page":16,"unit":"אותיות ف ق"},{"id":"w068","arabic":"مُدِير","hebrew":"מנהל","page":16,"unit":"אותיות ف ق"},{"id":"w069","arabic":"مُدِيرَة","hebrew":"מנהלת","page":16,"unit":"אותיות ف ق"},{"id":"w070","arabic":"دَفْتَر","hebrew":"מחברת","page":16,"unit":"אותיות ف ق"},{"id":"w071","arabic":"كِتَاب","hebrew":"ספר","page":16,"unit":"אותיות ف ق"},{"id":"w072","arabic":"قَلْب","hebrew":"לב","page":16,"unit":"אותיות ف ق"},{"id":"w073","arabic":"كَلَام","hebrew":"דיבור / דברים","page":16,"unit":"אותיות ف ق"},{"id":"w074","arabic":"بَنْك","hebrew":"בנק","page":16,"unit":"אותיות ف ق"},{"id":"w075","arabic":"مَكْتَب","hebrew":"משרד","page":16,"unit":"אותיות ف ق"},{"id":"w076","arabic":"بَرِيد","hebrew":"דואר","page":16,"unit":"אותיות ف ق"},{"id":"w077","arabic":"فِي","hebrew":"ב-","page":16,"unit":"אותיות ف ق"},{"id":"w078","arabic":"فَوْقَ","hebrew":"מעל","page":16,"unit":"אותיות ف ق"},{"id":"w079","arabic":"فَيْرُوز","hebrew":"פיירוז (שם פרטי)","page":16,"unit":"אותיות ف ق"},{"id":"w080","arabic":"بَرْلَمَان","hebrew":"פרלמנט","page":17,"unit":"תרגול עד כאן"},{"id":"w081","arabic":"تِلْمِيذ","hebrew":"תלמיד","page":17,"unit":"תרגול עד כאן"}],"sentences":[{"id":"s001","arabic":"دَار دَاوُد","hebrew":"הבית של דוד","page":4,"unit":"אותיות ארז דוד","kind":"ביטוי"},{"id":"s002","arabic":"دَار وِدَاد","hebrew":"הבית של ודאד","page":4,"unit":"אותיות ארז דוד","kind":"ביטוי"},{"id":"s003","arabic":"دَار دَاوُد أَوْ دَار وِدَاد","hebrew":"הבית של דוד או הבית של ודאד","page":4,"unit":"אותיות ארז דוד","kind":"משפט"},{"id":"s005","arabic":"دُور دُرُوز","hebrew":"דירות של דרוזים","page":4,"unit":"אותיות ארז דוד","kind":"ביטוי"},{"id":"s006","arabic":"زَارَ دَاوُد وِدَاد","hebrew":"דוד ביקר את ודאד","page":4,"unit":"אותיות ארז דוד","kind":"משפט"},{"id":"s007","arabic":"أَزَارَ دَاوُد دَار وِدَاد؟","hebrew":"האם דוד ביקר בבית של ודאד?","page":4,"unit":"אותיות ארז דוד","kind":"משפט"},{"id":"s008","arabic":"دَوْر دَاوُد وَدَوْر وِدَاد","hebrew":"התפקיד של דוד והתפקיד של ודאד","page":4,"unit":"אותיות ארז דוד","kind":"ביטוי"},{"id":"s009","arabic":"بِنْت نُور بِبَيْتِي","hebrew":"הבת של נור בבית שלי","page":6,"unit":"אותיות בנתי","kind":"ביטוי"},{"id":"s011","arabic":"أَبَرْد بِبَيْتِي؟","hebrew":"האם קר בבית שלי?","page":6,"unit":"אותיות בנתי","kind":"משפט"},{"id":"s012","arabic":"أَنَا بَدَوِيّ وَأَنْتَ دُرْزِيّ","hebrew":"אני בדואי ואתה דרוזי","page":6,"unit":"אותיות בנתי","kind":"משפט"},{"id":"s013","arabic":"إِبْنِي بِبَيْتِي وَبِنْتِي بِأُورُوبّا","hebrew":"הבן שלי בבית שלי והבת שלי באירופה","page":6,"unit":"אותיות בנתי","kind":"משפט"},{"id":"s014","arabic":"ثِيَاب نُور","hebrew":"הבגדים של נור","page":6,"unit":"אותיות בנתי","kind":"ביטוי"},{"id":"s015","arabic":"دَار مَرْيم هُنَا","hebrew":"הבית של מרים כאן","page":13,"unit":"אותיות م ل ك וסימן הנקבה","kind":"משפט"},{"id":"s016","arabic":"بَيَان هَامّ","hebrew":"הודעה חשובה","page":13,"unit":"אותיות م ل ك וסימן הנקבה","kind":"ביטוי"},{"id":"s017","arabic":"دَار نُورِي هُنَاكَ","hebrew":"הבית של נורי שם","page":13,"unit":"אותיות م ل ك וסימן הנקבה","kind":"משפט"},{"id":"s018","arabic":"دَوْلَة كَبِيرَة","hebrew":"מדינה גדולה","page":13,"unit":"אותיות م ل ك וסימן הנקבה","kind":"ביטוי"},{"id":"s019","arabic":"كَتَبَ وَلَدِي كَلِمَة","hebrew":"בני כתב מילה","page":13,"unit":"אותיות م ل ك וסימן הנקבה","kind":"משפט"},{"id":"s020","arabic":"هُوَ يَهُودِيّ وَأَنَا دُرْزِيّ","hebrew":"הוא יהודי ואני דרוזי","page":13,"unit":"אותיות م ل ك וסימן הנקבה","kind":"משפט"},{"id":"s021","arabic":"هَرَبَ دَاوُد وَهَرَبَتْ نُور","hebrew":"דוד ברח ונור ברחה","page":13,"unit":"אותיות م ل ك וסימן הנקבה","kind":"משפט"},{"id":"s022","arabic":"الوَلَد هُنَا","hebrew":"הילד כאן","page":14,"unit":"ال הידיעה ושמות","kind":"משפט"},{"id":"s023","arabic":"رَأَيْتُ البِنْت","hebrew":"ראיתי את הילדה","page":14,"unit":"ال הידיעה ושמות","kind":"משפט"},{"id":"s024","arabic":"كَتَبَتْ بِنْتِي الكَلِمَة","hebrew":"בתי כתבה את המילה","page":14,"unit":"ال הידיעה ושמות","kind":"משפט"},{"id":"s025","arabic":"هَرَبَ الوَلَد مِنْ هُنَا","hebrew":"הילד ברח מכאן","page":14,"unit":"ال הידיעה ושמות","kind":"משפט"},{"id":"s026","arabic":"هُوَ الوَزِير","hebrew":"הוא השר","page":14,"unit":"ال הידיעה ושמות","kind":"משפט"},{"id":"s027","arabic":"رَأَيْنَا الوَزِيرَة هُنَاكَ","hebrew":"ראינו את השרה שם","page":14,"unit":"ال הידיעה ושמות","kind":"משפט"},{"id":"s028","arabic":"قَرَأْتُ الْكَلِمَة فِي دَفْتَرِي","hebrew":"קראתי את המילה במחברת שלי","page":16,"unit":"אותיות ف ق","kind":"משפט"},{"id":"s029","arabic":"كَانَ الْوَزِير فِي قَلْب الْمَدِينَة","hebrew":"השר היה בלב העיר","page":16,"unit":"אותיות ف ق","kind":"משפט"},{"id":"s030","arabic":"هَلْ بِنْتُكِ هِيَ مُدِيرَة بَنْك؟ لَا هِيَ مُدِيرَة مَكْتَب الْبَرِيد","hebrew":"האם בתך היא מנהלת בנק? לא, היא מנהלת משרד הדואר","page":16,"unit":"אותיות ف ق","kind":"משפט"},{"id":"s031","arabic":"مَا فَهِمْنَا كَلَام الْمُدِير","hebrew":"לא הבנו את דברי המנהל","page":16,"unit":"אותיות ف ق","kind":"משפט"},{"id":"s032","arabic":"الْكِتَاب فَوْقَ دَفْتَر فَيْرُوز","hebrew":"הספר מעל המחברת של פיירוז","page":16,"unit":"אותיות ف ق","kind":"משפט"},{"id":"s033","arabic":"بَيْت الْوَلَد","hebrew":"בית הילד","page":17,"unit":"תרגול עד כאן","kind":"ביטוי"},{"id":"s034","arabic":"مَدِينَة كَبِيرَة","hebrew":"עיר גדולה","page":17,"unit":"תרגול עד כאן","kind":"ביטוי"},{"id":"s035","arabic":"دَار نُور","hebrew":"הבית של נור","page":17,"unit":"תרגול עד כאן","kind":"ביטוי"},{"id":"s036","arabic":"كِتَاب هَامّ","hebrew":"ספר חשוב","page":17,"unit":"תרגול עד כאן","kind":"ביטוי"},{"id":"s037","arabic":"كَلِمَة هَامَّة","hebrew":"מילה חשובה","page":17,"unit":"תרגול עד כאן","kind":"ביטוי"},{"id":"s038","arabic":"مُدِير بَنْك","hebrew":"מנהל בנק","page":17,"unit":"תרגול עד כאן","kind":"ביטוי"},{"id":"s039","arabic":"بَرْلَمَان الدَّوْلَة","hebrew":"פרלמנט המדינה","page":17,"unit":"תרגול עד כאן","kind":"ביטוי"},{"id":"s040","arabic":"مَكْتَب الْبَرِيد","hebrew":"משרד הדואר","page":17,"unit":"תרגול עד כאן","kind":"ביטוי"},{"id":"s041","arabic":"دَفْتَر تِلْمِيذِي","hebrew":"המחברת של התלמיד שלי","page":17,"unit":"תרגול עד כאן","kind":"ביטוי"},{"id":"s042","arabic":"قَلْب الْمَلِك","hebrew":"לב המלך","page":17,"unit":"תרגול עד כאן","kind":"ביטוי"},{"id":"s043","arabic":"كَلَام الْوَزِير","hebrew":"דברי השר","page":17,"unit":"תרגול עד כאן","kind":"ביטוי"},{"id":"s044","arabic":"أَلْوَلَد هُنَاكَ","hebrew":"הילד שם","page":17,"unit":"תרגול עד כאן","kind":"משפט"},{"id":"s045","arabic":"أَلْبِنْت هُنَا","hebrew":"הילדה כאן","page":17,"unit":"תרגול עד כאן","kind":"משפט"},{"id":"s046","arabic":"نُور فِي بَيْتِي","hebrew":"נור בביתי","page":17,"unit":"תרגול עד כאן","kind":"משפט"},{"id":"s047","arabic":"بَلَد وَبِلَاد","hebrew":"ארץ וארצות","page":17,"unit":"תרגול עד כאן","kind":"ביטוי"},{"id":"s048","arabic":"أَلْمَدِينَة كَبِيرَة","hebrew":"העיר גדולה","page":17,"unit":"תרגול עד כאן","kind":"משפט"},{"id":"s049","arabic":"دَوْر الْمُدِير","hebrew":"תפקיד המנהל","page":17,"unit":"תרגול עד כאן","kind":"ביטוי"},{"id":"s050","arabic":"زَارَ دَاوُد بَيْت وِدَاد فِي الْمَدِينَة","hebrew":"דוד ביקר בבית של ודאד בעיר","page":18,"unit":"תרגול עד כאן","kind":"משפט"},{"id":"s051","arabic":"قَرَأَ وَلَدِي كِتَابًا فِي مَكْتَب الْبَرِيد","hebrew":"בני קרא ספר במשרד הדואר","page":18,"unit":"תרגול עד כאן","kind":"משפט"},{"id":"s052","arabic":"فَهِمَتْ بِنْتِي الْكَلِمَة فِي دَفْتَرِهَا","hebrew":"בתי הבינה את המילה במחברת שלה","page":18,"unit":"תרגול עד כאן","kind":"משפט"},{"id":"s053","arabic":"كَانَ الْوَزِير فِي بَرْلَمَان الدَّوْلَة","hebrew":"השר היה בפרלמנט המדינה","page":18,"unit":"תרגול עד כאן","kind":"משפט"}],"names":[{"id":"n001","arabic":"بَار إيلَان","hebrew":"בר-אילן","page":14},{"id":"n002","arabic":"لُبْنَان","hebrew":"לבנון","page":14},{"id":"n003","arabic":"بَيْرُوت","hebrew":"ביירות","page":14},{"id":"n004","arabic":"إيرَان","hebrew":"איראן","page":14},{"id":"n005","arabic":"دُبَيّ","hebrew":"דובאי","page":14},{"id":"n006","arabic":"تَل أَبِيب","hebrew":"תל אביב","page":15},{"id":"n007","arabic":"يَابَان","hebrew":"יפן","page":15},{"id":"n008","arabic":"أَلْيُونَان","hebrew":"יוון","page":15},{"id":"n009","arabic":"أَمْرِيكِيّ","hebrew":"אמריקאי","page":15},{"id":"n010","arabic":"بَايْدِن","hebrew":"ביידן","page":15},{"id":"n011","arabic":"بِنْيَامِين نِتَنْيَاهُو","hebrew":"בנימין נתניהו","page":15},{"id":"n012","arabic":"نَتَانِيَا","hebrew":"נתניה","page":15},{"id":"n013","arabic":"لَنْدَن","hebrew":"לונדון","page":15},{"id":"n014","arabic":"تِوِيتِر","hebrew":"טוויטר","page":15},{"id":"n015","arabic":"دُونَالْد تَرَمْب","hebrew":"דונלד טראמפ","page":15},{"id":"n016","arabic":"رُونَالْدُو","hebrew":"רונאלדו","page":15},{"id":"n017","arabic":"نَهَارِيَا","hebrew":"נהריה","page":15}],"principles":[{"id":"p001","name":"תנועות","description":"פתחה (a) ـَ, כסרה (i) ـِ, דמה (u) ـُ, סוכון ـْ (בלי תנועה), המזה ء أ إ ؤ","examples":"دَار, بِنْت, دُور","page":2,"status":"אומת"},{"id":"p002","name":"אותיות ארז דוד","description":"האותיות ا ر ز د و ذ","examples":"دَار, زَارَ, دُرُوز","page":2,"status":"אומת"},{"id":"p003","name":"ה' הנקבה: ة","description":"סימן הנקבה ة בסוף השם","examples":"مَلِك ← مَلِكَة, وَزِير ← وَزِيرَة, مُدِير ← مُدِيرَة","page":12,"status":"אומת"},{"id":"p004","name":"ال הידיעה","description":"ال לפני שם עצם להגדרה","examples":"الوَلَد, البِنْت, الوَزِير","page":14,"status":"טיוטה"},{"id":"p005","name":"הפועל בעבר","description":"סיומות לפי גוף: ـتُ (אני), ـتَ (אתה), ـتِ (את), בלי סיומת (הוא), ـَتْ (היא)","examples":"هَرَبْتُ, هَرَبْتَ, هَرَبْتِ, هَرَبَ, هَرَبَتْ","page":11,"status":"טיוטה"},{"id":"p006","name":"שלילה בעבר","description":"مَا לפני פועל בעבר","examples":"مَا فَهِمْنَا كَلَام الْمُدِير","page":16,"status":"אומת"},{"id":"p007","name":"כינויי שייכות","description":"ـِي (שלי), ـكِ (שלך, נקבה), ـهَا (שלה)","examples":"دَفْتَرِي, بِنْتُكِ, دَفْتَرِهَا","page":6,"status":"טיוטה"},{"id":"p008","name":"סיומת ـِيّ","description":"יוצרת שם תואר או שם השתייכות","examples":"بَدَوِيّ, دُرْزِيّ, يَهُودِيّ","page":5,"status":"טיוטה"},{"id":"p009","name":"מילות שאלה","description":"هَلْ (האם), مَاذَا (מה), וגם أَ בתחילת משפט","examples":"هَلْ بِنْتُكِ مُدِيرَة؟, أَزَارَ دَاوُد دَار وِدَاد؟","page":4,"status":"טיוטה"},{"id":"p010","name":"סמיכות","description":"שם עצם נסמך על השם שאחריו: دَار دَاوُد = הבית של דוד","examples":"دَار دَاوُد, قَلْب الْمَلِك, مُدِير بَنْك","page":4,"status":"טיוטה"}]};
+
+var KEY='roni-arabic-v1', DAY=864e5, INT=[0,1,2,4,8,16];
+var WORDS=DB.words, SENTS=DB.sentences, PRINC=DB.principles;
+var NAMES=DB.names.map(function(n){return {id:n.id,arabic:n.arabic,hebrew:n.hebrew,page:n.page,unit:'שמות ומקומות'};});
+var UNITS=[];
+WORDS.forEach(function(w){ if(UNITS.indexOf(w.unit)<0) UNITS.push(w.unit); });
+
+var S={cards:{},scope:'all',dir:'ar',quiz:'ar2he'};
+function load(){
+  try{
+    var raw=localStorage.getItem(KEY);
+    if(raw){ var o=JSON.parse(raw); if(o&&typeof o==='object'){ for(var k in o){ S[k]=o[k]; } } }
+  }catch(e){}
+  if(!S.cards||typeof S.cards!=='object') S.cards={};
+}
+function save(){ try{ localStorage.setItem(KEY,JSON.stringify(S)); }catch(e){} }
+
+/* ---------- helpers ---------- */
+var view=document.getElementById('view');
+function esc(s){ return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+function shuffle(a){ for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+function strip(s){ return s.replace(/[ؐ-ًؚ-ٰٟۖ-ۭـ]/g,'').replace(/[أإآٱ]/g,'ا'); }
+function hebKeys(h){
+  return h.split(/\s*\/\s*/).map(function(p){
+    var m=p.replace(/\(.*?\)/g,'').trim().match(/^[^\s.,]+/);
+    return m?m[0]:p;
+  });
+}
+function sameMeaning(a,b){
+  var ka=hebKeys(a), kb=hebKeys(b);
+  return ka.some(function(x){ return kb.indexOf(x)>=0; });
+}
+function exampleFor(w){
+  var k=strip(w.arabic);
+  for(var i=0;i<SENTS.length;i++){
+    var s=SENTS[i];
+    if(strip(s.arabic)===k) continue;
+    var toks=strip(s.arabic).split(/\s+/).map(function(t){return t.replace(/[؟،.!]/g,'');});
+    if(toks.indexOf(k)>=0||toks.indexOf('ال'+k)>=0) return s;
+  }
+  return null;
+}
+function fixScope(){
+  var m=/^u(\d+)$/.exec(S.scope);
+  if(S.scope==='all'||S.scope==='names') return;
+  if(!m||+m[1]>=UNITS.length) S.scope='all';
+}
+function scopeUnit(){ var m=/^u(\d+)$/.exec(S.scope); return m?UNITS[+m[1]]:null; }
+function wordPool(){
+  fixScope();
+  if(S.scope==='names') return NAMES.slice();
+  var u=scopeUnit();
+  return u?WORDS.filter(function(w){return w.unit===u;}):WORDS.slice();
+}
+function sentPool(){
+  var u=scopeUnit();
+  var l=u?SENTS.filter(function(s){return s.unit===u;}):SENTS.slice();
+  return l.length?l:SENTS.slice();
+}
+function fillPool(list,n){
+  if(list.length>=n) return list.slice();
+  var extra=shuffle(WORDS.filter(function(w){return list.indexOf(w)<0;}));
+  return list.concat(extra).slice(0,n);
+}
+function pageRange(items){
+  var ps=items.map(function(x){return x.page;});
+  if(!ps.length) return '';
+  var a=Math.min.apply(null,ps), b=Math.max.apply(null,ps);
+  return a===b?("עמ' "+a):("עמ' "+a+"–"+b);
+}
+
+var ICON={
+  back:'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>',
+  check:'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg>',
+  cross:'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12"/><path d="M18 6L6 18"/></svg>',
+  crown:'<svg viewBox="0 0 24 24" width="72" height="72" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 10H5z"/><path d="M5 21h14"/></svg>',
+  cards:'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="7" width="16" height="12" rx="2"/><path d="M8 3.5h8"/></svg>',
+  match:'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h14l-3-3"/><path d="M20 16H6l3 3"/></svg>',
+  quiz:'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/></svg>',
+  book:'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h11a3 3 0 013 3v13H8a3 3 0 01-3-3z"/><path d="M9 9h6"/></svg>',
+  blocks:'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="9" width="7" height="6" rx="1.5"/><rect x="14" y="9" width="7" height="6" rx="1.5"/></svg>',
+  pin:'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s7-6.2 7-11a7 7 0 10-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>'
+};
+
+function setView(html,start){
+  view.innerHTML=html;
+  document.body.classList.toggle('on-start',!!start);
+}
+function bar(title,counter){
+  return '<div class="bar"><a class="icon-btn" href="#home" aria-label="חזרה לבית">'+ICON.back+'</a>'+
+    '<div class="bar-title">'+esc(title)+'</div><div class="counter">'+(counter||'')+'</div></div>';
+}
+function progress(frac){
+  return '<div class="progress" role="presentation"><i style="width:'+Math.round(Math.max(0,Math.min(1,frac))*100)+'%"></i></div>';
+}
+function resultsView(title,big,heading,sub,mode){
+  setView(bar(title)+
+    '<div class="stack"><div class="res"><div class="big">'+esc(big)+'</div><div class="t">'+esc(heading)+'</div>'+
+    '<div class="muted">'+esc(sub)+'</div></div>'+
+    '<button class="btn btn-primary" data-act="restart" data-v="'+mode+'">סבב נוסף</button>'+
+    '<a class="btn btn-soft" href="#home">חזרה לבית</a></div>');
+}
+
+/* ---------- spaced repetition ---------- */
+function cardQueue(){
+  var ws=wordPool(), t=Date.now();
+  var due=ws.filter(function(w){return S.cards[w.id]&&S.cards[w.id].d<=t;})
+    .sort(function(a,b){return S.cards[a.id].d-S.cards[b.id].d;});
+  var fresh=ws.filter(function(w){return !S.cards[w.id];});
+  return due.concat(fresh).slice(0,10);
+}
+function grade(id,ok){
+  var c=S.cards[id]||{b:0,d:0};
+  if(ok){ c.b=Math.min(5,c.b+1); c.d=Date.now()+INT[c.b]*DAY; }
+  else { c.b=0; c.d=Date.now(); }
+  S.cards[id]=c; save();
+}
+
+/* ---------- views ---------- */
+var timer=null;
+var ACT={};
+
+function start(){
+  setView('<div class="start">'+ICON.crown+
+    '<div class="stack-s" style="align-items:center"><h1>לימודי מזרח תיכון</h1><div class="sub">ממלכת רוני</div></div>'+
+    '<div>ערבית ספרותית למתחילים · אוניברסיטת בר-אילן</div>'+
+    '<a class="btn" href="#home">התחל ללמוד</a></div>',true);
+}
+
+var confirmReset=false;
+function home(){
+  fixScope();
+  var q=cardQueue(), n=q.length;
+  var dueN=q.filter(function(w){return S.cards[w.id];}).length;
+  var heroT=n?(n===1?'כרטיס אחד מחכה לך':n+' כרטיסים מחכים לך'):'הכול מעודכן להיום';
+  var heroS=n?(dueN+' לחזרה · '+(n-dueN)+' חדשים'):'אפשר לתרגל בכל זאת או לבחור מצב אחר';
+  var opts=[['all','כל החומר']].concat(UNITS.map(function(u,i){return ['u'+i,u];}),[['names','שמות ומקומות']]);
+  var optHtml=opts.map(function(o){
+    return '<option value="'+o[0]+'"'+(S.scope===o[0]?' selected':'')+'>'+esc(o[1])+'</option>';
+  }).join('');
+  function unitRow(key,name,items){
+    var learned=items.filter(function(w){return S.cards[w.id]&&S.cards[w.id].b>=1;}).length;
+    var frac=items.length?learned/items.length:0;
+    return '<button class="unit" data-act="scope" data-v="'+key+'" aria-pressed="'+(S.scope===key)+'">'+
+      '<div class="top"><div class="nm">'+esc(name)+'</div><div class="meta">'+items.length+' מילים · '+esc(pageRange(items))+'</div></div>'+
+      '<div class="progress" style="margin:0" role="presentation"><i style="width:'+Math.round(frac*100)+'%"></i></div>'+
+      '<div class="meta">נלמדו '+learned+' מתוך '+items.length+'</div></button>';
+  }
+  var units=UNITS.map(function(u,i){
+    return unitRow('u'+i,u,WORDS.filter(function(w){return w.unit===u;}));
+  }).join('')+unitRow('names','שמות ומקומות',NAMES);
+
+  setView('<div class="stack" style="gap:22px">'+
+    '<div class="home-head"><div class="lbl">אוניברסיטת בר-אילן</div><h1>ערבית ספרותית למתחילים</h1></div>'+
+    '<div class="hero"><div><div style="font-size:14px;font-weight:600">התרגול להיום</div><div class="t">'+heroT+'</div><div style="font-size:14px;margin-top:2px">'+heroS+'</div></div>'+
+      '<a class="btn" href="#cards">'+(n?'התחל חזרה':'תרגל בכל זאת')+'</a></div>'+
+    '<div class="field"><label class="lbl" for="scope">מה לתרגל</label><select class="sel" id="scope">'+optHtml+'</select></div>'+
+    '<div class="stack-s"><h2 style="font-size:18px">מצבי תרגול</h2><div class="tiles">'+
+      '<a class="tile" href="#cards"><div class="ico">'+ICON.cards+'</div><div><div class="n">כרטיסיות</div><div class="d">חזרה מרווחת</div></div></a>'+
+      '<a class="tile" href="#match"><div class="ico">'+ICON.match+'</div><div><div class="n">התאמה</div><div class="d">ערבית ↔ עברית</div></div></a>'+
+      '<a class="tile" href="#quiz"><div class="ico">'+ICON.quiz+'</div><div><div class="n">מבחן</div><div class="d">רב-ברירה</div></div></a>'+
+      '<a class="tile" href="#principles"><div class="ico">'+ICON.book+'</div><div><div class="n">עקרונות</div><div class="d">הסבר ודוגמאות</div></div></a>'+
+      '<a class="tile" href="#sentence"><div class="ico">'+ICON.blocks+'</div><div><div class="n">בניית משפט</div><div class="d">קוביות מילים</div></div></a>'+
+      '<button class="tile" data-act="names"><div class="ico">'+ICON.pin+'</div><div><div class="n">שמות ומקומות</div><div class="d">זיהוי במבחן</div></div></button>'+
+    '</div></div>'+
+    '<div class="stack-s"><h2 style="font-size:18px">יחידות</h2>'+units+'</div>'+
+    '<div class="foot">'+
+      '<div>ההתקדמות נשמרת בדפדפן של הטלפון הזה, ולכל אחד יש התקדמות משלו.</div>'+
+      '<div>כדי לפתוח כמו אפליקציה: בתפריט הדפדפן בחר "הוסף למסך הבית".</div>'+
+      '<div>התוכן מתוך החוברת "ערבית למתחילים", המחלקה לערבית, אוניברסיטת בר-אילן. מהדורת ניסוי, לשימוש פנימי.</div>'+
+      (confirmReset
+        ? '<div class="row2"><button class="btn btn-bad" style="min-height:48px;font-size:15px" data-act="resetYes">כן, למחוק</button><button class="btn btn-soft" style="min-height:48px;font-size:15px" data-act="resetNo">ביטול</button></div>'
+        : '<button class="link-btn" data-act="reset">איפוס ההתקדמות</button>')+
+    '</div></div>');
+}
+ACT.scope=function(d){ S.scope=d.v; save(); home(); window.scrollTo(0,0); };
+ACT.names=function(){ S.scope='names'; S.quiz='ar2he'; save(); go('quiz'); };
+ACT.reset=function(){ confirmReset=true; home(); };
+ACT.resetNo=function(){ confirmReset=false; home(); };
+ACT.resetYes=function(){ confirmReset=false; S.cards={}; save(); home(); };
+
+/* --- flashcards --- */
+var C=null;
+function cards(){
+  var queue=cardQueue(), practice=false;
+  if(!queue.length){ practice=true; queue=shuffle(wordPool()).slice(0,10); }
+  C={queue:queue,i:0,flip:false,known:0,again:0,rq:{},practice:practice};
+  renderCards();
+}
+function renderCards(){
+  if(C.i>=C.queue.length) return cardsDone();
+  var w=C.queue[C.i], ex=exampleFor(w), arFirst=(S.dir==='ar');
+  var front, back;
+  if(arFirst){
+    front='<div class="lbl">ערבית</div><div class="ar big-ar">'+esc(w.arabic)+'</div><div class="muted" style="font-size:14px">הקש כדי לראות את התרגום</div>';
+    back='<div class="lbl">עברית</div><div class="big-he">'+esc(w.hebrew)+'</div>';
+  } else {
+    front='<div class="lbl">עברית</div><div class="big-he">'+esc(w.hebrew)+'</div><div class="muted" style="font-size:14px">הקש כדי לראות את הערבית</div>';
+    back='<div class="lbl">ערבית</div><div class="ar big-ar">'+esc(w.arabic)+'</div>';
+  }
+  var exHtml=ex?('<div class="ex"><div class="lbl">מתוך התרגול</div><div class="ar ex-ar">'+esc(ex.arabic)+'</div><div>'+esc(ex.hebrew)+'</div></div>'):'';
+  setView(bar('כרטיסיות',(C.i+1)+' / '+C.queue.length)+progress(C.i/C.queue.length)+
+    '<div class="seg" role="group" aria-label="כיוון">'+
+      '<button data-act="dir" data-v="ar" aria-pressed="'+arFirst+'">ערבית קודם</button>'+
+      '<button data-act="dir" data-v="he" aria-pressed="'+(!arFirst)+'">עברית קודם</button></div>'+
+    '<div class="stack-s" style="margin-bottom:6px"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="chip">'+esc(w.unit)+'</span><span class="lbl">עמ\' '+w.page+'</span>'+
+      (C.practice?'<span class="chip warn">תרגול חופשי</span>':'')+'</div></div>'+
+    '<div class="stack">'+
+    '<button class="flash" data-act="flip" aria-label="הפוך כרטיס">'+(C.flip?(back+exHtml):front)+'</button>'+
+    (C.flip
+      ? '<div class="row2"><button class="btn btn-bad" data-act="again">'+ICON.cross+'עוד לא</button><button class="btn btn-primary" data-act="know">'+ICON.check+'ידעתי</button></div>'
+      : '<div class="note">קודם הפוך את הכרטיס, ואז סמן אם ידעת</div>')+
+    '</div>');
+}
+function cardsDone(){
+  var total=C.known+C.again;
+  resultsView('כרטיסיות',String(C.known),'מתוך '+total+' כרטיסים ידעת',
+    C.practice?'זה היה תרגול חופשי, לוח החזרות לא השתנה.':'הכרטיסים שלא ידעת יחזרו בסבב הבא.','cards');
+}
+ACT.flip=function(){ C.flip=!C.flip; renderCards(); };
+ACT.dir=function(d){ S.dir=d.v; save(); if(C){ C.flip=false; renderCards(); } };
+ACT.know=function(){
+  var w=C.queue[C.i];
+  if(!C.practice) grade(w.id,true);
+  C.known++; C.i++; C.flip=false; renderCards();
+};
+ACT.again=function(){
+  var w=C.queue[C.i];
+  if(!C.practice) grade(w.id,false);
+  C.again++;
+  if(!C.rq[w.id]){ C.rq[w.id]=true; C.queue.push(w); }
+  C.i++; C.flip=false; renderCards();
+};
+
+/* --- matching --- */
+var M=null;
+function match(){
+  var pool=fillPool(shuffle(wordPool()),6), pairs=[], seenH=[], seenA=[];
+  pool.forEach(function(w){
+    if(pairs.length>=6) return;
+    var dup=seenH.some(function(h){return sameMeaning(h,w.hebrew);})||seenA.indexOf(w.arabic)>=0;
+    if(dup) return;
+    seenH.push(w.hebrew); seenA.push(w.arabic); pairs.push(w);
+  });
+  M={pairs:pairs,a:shuffle(pairs.slice()),h:shuffle(pairs.slice()),selA:null,selH:null,done:{},mistakes:0,bad:null};
+  renderMatch();
+}
+function renderMatch(){
+  var doneN=Object.keys(M.done).length;
+  function btn(side,w){
+    var id=w.id, isDone=!!M.done[id];
+    var sel=(side==='a'?M.selA:M.selH)===id;
+    var bad=M.bad&&M.bad[side]===id;
+    var cls='mbtn '+(side==='a'?'ar':'he')+(isDone?' done':'')+(sel&&!bad?' sel':'')+(bad?' bad':'');
+    var txt=esc(side==='a'?w.arabic:w.hebrew);
+    return '<button class="'+cls+'" data-act="m'+side+'" data-id="'+id+'"'+(isDone?' disabled':'')+' aria-pressed="'+(sel?'true':'false')+'">'+
+      (isDone?ICON.check:'')+'<span>'+txt+'</span></button>';
+  }
+  setView(bar('התאמה',doneN+' / '+M.pairs.length)+progress(doneN/M.pairs.length)+
+    '<div class="stack"><div><div style="font-size:20px;font-weight:700;line-height:1.3">התאם כל מילה לתרגום שלה</div>'+
+    '<div class="muted" style="font-size:14px">בחר מילה בערבית ואת התרגום שלה בעברית</div></div>'+
+    '<div class="mgrid"><div class="stack-s"><div class="lbl">ערבית</div>'+M.a.map(function(w){return btn('a',w);}).join('')+'</div>'+
+    '<div class="stack-s"><div class="lbl">עברית</div>'+M.h.map(function(w){return btn('h',w);}).join('')+'</div></div>'+
+    '<div class="stat"><span class="muted">טעויות במשחק</span><b>'+M.mistakes+'</b></div></div>');
+}
+function matchPick(side,id){
+  if(M.done[id]||M.bad) return;
+  if(side==='a') M.selA=id; else M.selH=id;
+  if(M.selA&&M.selH){
+    if(M.selA===M.selH){
+      M.done[M.selA]=true; M.selA=null; M.selH=null;
+      if(Object.keys(M.done).length===M.pairs.length){
+        renderMatch();
+        timer=setTimeout(function(){
+          resultsView('התאמה',String(M.mistakes),M.mistakes===0?'בלי אף טעות':'טעויות בסבב','כל הזוגות הותאמו.','match');
+        },450);
+        return;
+      }
+    } else {
+      M.mistakes++; M.bad={a:M.selA,h:M.selH}; M.selA=null; M.selH=null;
+      renderMatch();
+      timer=setTimeout(function(){ if(M){ M.bad=null; renderMatch(); } },650);
+      return;
+    }
+  }
+  renderMatch();
+}
+ACT.ma=function(d){ matchPick('a',d.id); };
+ACT.mh=function(d){ matchPick('h',d.id); };
+
+/* --- quiz --- */
+var Q=null;
+function quiz(){
+  var qs=[];
+  if(S.quiz==='sent'){
+    qs=shuffle(sentPool()).slice(0,10).map(function(s){
+      var others=shuffle(SENTS.filter(function(x){return x.hebrew!==s.hebrew;})).slice(0,3);
+      var opts=shuffle([{t:s.hebrew,ok:true}].concat(others.map(function(o){return {t:o.hebrew,ok:false};})));
+      return {kind:'sent',s:s,opts:opts};
+    });
+  } else {
+    var dp=S.scope==='names'?NAMES:WORDS;
+    var he2ar=(S.quiz==='he2ar');
+    qs=shuffle(wordPool()).slice(0,10).map(function(w){
+      var others=shuffle(dp.filter(function(x){
+        return x.id!==w.id&&x.arabic!==w.arabic&&!sameMeaning(x.hebrew,w.hebrew);
+      })).slice(0,3);
+      var all=[w].concat(others);
+      var opts=shuffle(all.map(function(x){return {t:he2ar?x.arabic:x.hebrew,ok:x.id===w.id};}));
+      return {kind:he2ar?'he2ar':'ar2he',w:w,opts:opts};
+    });
+  }
+  Q={qs:qs,i:0,picked:null,score:0};
+  renderQuiz();
+}
+function renderQuiz(){
+  if(Q.i>=Q.qs.length) return quizDone();
+  var q=Q.qs[Q.i], answered=Q.picked!==null;
+  var prompt, lab='מה פירוש המילה?';
+  if(q.kind==='ar2he'){ prompt='<div class="ar q-ar">'+esc(q.w.arabic)+'</div>'; }
+  else if(q.kind==='he2ar'){ lab='איך אומרים בערבית?'; prompt='<div class="q-he">'+esc(q.w.hebrew)+'</div>'; }
+  else { lab='מה פירוש המשפט?'; prompt='<div class="ar q-ar sentence">'+esc(q.s.arabic)+'</div>'; }
+  var optHtml=q.opts.map(function(o,k){
+    var cls='opt'+(q.kind==='he2ar'?' ar':'');
+    var icon='';
+    if(answered){
+      if(o.ok){ cls+=' ok'; icon=ICON.check; }
+      else if(Q.picked===k){ cls+=' bad'; icon=ICON.cross; }
+      else cls+=' dim';
+    }
+    return '<button class="'+cls+'" data-act="qpick" data-i="'+k+'"'+(answered?' disabled':'')+'><span'+(q.kind==='he2ar'?' class="ar"':'')+'>'+esc(o.t)+'</span>'+icon+'</button>';
+  }).join('');
+  var fb='';
+  if(answered){
+    var right=q.opts.filter(function(o){return o.ok;})[0];
+    var ok=q.opts[Q.picked].ok;
+    var info=q.kind==='sent'?q.s:q.w, ex=q.kind==='sent'?null:exampleFor(q.w);
+    fb='<div class="feedback" aria-live="polite"><div class="v">'+(ok?'נכון!':'התשובה: ')+(ok?'':'<span'+(q.kind==='he2ar'?' class="ar"':'')+'>'+esc(right.t)+'</span>')+'</div>'+
+      (q.kind==='sent'?'':'<div class="lbl">'+esc(q.w.arabic)+' · '+esc(q.w.hebrew)+'</div>')+
+      (ex?'<div style="display:flex;align-items:center;justify-content:space-between;gap:12px"><div class="ar" style="font-size:24px">'+esc(ex.arabic)+'</div><div class="muted" style="font-size:15px">'+esc(ex.hebrew)+'</div></div>':'')+
+      '<div class="lbl">עמ\' '+info.page+' · '+esc(info.unit)+'</div></div>';
+  }
+  setView(bar('מבחן',(Q.i+1)+' / '+Q.qs.length)+progress(Q.i/Q.qs.length)+
+    '<div class="seg" role="group" aria-label="סוג מבחן">'+
+      '<button data-act="qkind" data-v="ar2he" aria-pressed="'+(S.quiz==='ar2he')+'">מערבית לעברית</button>'+
+      '<button data-act="qkind" data-v="he2ar" aria-pressed="'+(S.quiz==='he2ar')+'">מעברית לערבית</button>'+
+      '<button data-act="qkind" data-v="sent" aria-pressed="'+(S.quiz==='sent')+'">משפטים</button></div>'+
+    '<div class="stack"><div class="qcard"><div class="muted">'+lab+'</div>'+prompt+'</div>'+
+    '<div class="stack-s">'+optHtml+'</div>'+fb+
+    (answered?'<button class="btn btn-primary" data-act="qnext">'+(Q.i+1>=Q.qs.length?'לתוצאה':'לשאלה הבאה')+'</button>':'')+'</div>');
+}
+function quizDone(){
+  resultsView('מבחן',Q.score+' / '+Q.qs.length,Q.score===Q.qs.length?'מושלם':'סיימת את המבחן',
+    'מילים שטעית בהן חזרו לכרטיסיות לחזרה.','quiz');
+}
+ACT.qpick=function(d){
+  if(Q.picked!==null) return;
+  var q=Q.qs[Q.i], k=+d.i;
+  Q.picked=k;
+  if(q.opts[k].ok) Q.score++;
+  else if(q.kind!=='sent'){ S.cards[q.w.id]={b:0,d:Date.now()}; save(); }
+  renderQuiz();
+};
+ACT.qnext=function(){ Q.i++; Q.picked=null; renderQuiz(); window.scrollTo(0,0); };
+ACT.qkind=function(d){ S.quiz=d.v; save(); quiz(); };
+
+/* --- principles --- */
+var P=null;
+function principles(){ P={i:0}; renderPrinciples(); }
+function renderPrinciples(){
+  var p=PRINC[P.i];
+  var exs=p.examples?p.examples.split(/,\s*/):[];
+  setView(bar('עקרונות',(P.i+1)+' / '+PRINC.length)+progress((P.i+1)/PRINC.length)+
+    '<div class="stack"><div class="pcard">'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><span class="chip">עמ\' '+p.page+'</span>'+
+      (p.status!=='אומת'?'<span class="chip warn">טיוטה · ממתין לניסוח המרצה</span>':'')+'</div>'+
+      '<h2>'+esc(p.name)+'</h2><p class="desc">'+esc(p.description)+'</p>'+
+      (exs.length?'<div><div class="lbl" style="margin-bottom:4px">דוגמאות</div>'+exs.map(function(e){return '<div class="exrow ar">'+esc(e)+'</div>';}).join('')+'</div>':'')+
+    '</div>'+
+    '<div class="row2"><button class="btn btn-soft" data-act="pprev"'+(P.i===0?' disabled':'')+'>העיקרון הקודם</button>'+
+    '<button class="btn btn-primary" data-act="pnext"'+(P.i===PRINC.length-1?' disabled':'')+'>העיקרון הבא</button></div></div>');
+}
+ACT.pprev=function(){ if(P.i>0){ P.i--; renderPrinciples(); window.scrollTo(0,0);} };
+ACT.pnext=function(){ if(P.i<PRINC.length-1){ P.i++; renderPrinciples(); window.scrollTo(0,0);} };
+
+/* --- sentence builder --- */
+var T=null;
+function sentOk(s){ var n=s.arabic.split(/\s+/).length; return n>=3&&n<=8; }
+function sentence(){
+  var pl=sentPool().filter(sentOk);
+  if(pl.length<3) pl=SENTS.filter(sentOk);
+  var allToks=[];
+  SENTS.forEach(function(s){ s.arabic.split(/\s+/).forEach(function(t){ if(t.indexOf('؟')<0) allToks.push(t); }); });
+  var list=shuffle(pl).slice(0,8).map(function(s){
+    var toks=s.arabic.split(/\s+/);
+    var have=toks.map(strip), extra=[];
+    shuffle(allToks.slice()).forEach(function(t){
+      if(extra.length>=2) return;
+      var st=strip(t);
+      if(have.indexOf(st)>=0||extra.some(function(e){return strip(e)===st;})) return;
+      extra.push(t);
+    });
+    var bank=shuffle(toks.concat(extra).map(function(t,k){return {k:k,t:t};}));
+    return {s:s,toks:toks,bank:bank};
+  });
+  T={list:list,i:0,placed:[],checked:null,ok:0};
+  renderSentence();
+}
+function renderSentence(){
+  if(T.i>=T.list.length) return sentDone();
+  var it=T.list[T.i], checked=T.checked!==null;
+  var byK={}; it.bank.forEach(function(b){byK[b.k]=b;});
+  var placedHtml=T.placed.map(function(k){
+    var cls='tok placed'+(checked?(T.checked?' ok':' bad'):'');
+    return '<button class="'+cls+'" data-act="tunplace" data-k="'+k+'"'+(checked?' disabled':'')+' aria-label="הסר את המילה '+esc(byK[k].t)+'">'+esc(byK[k].t)+'</button>';
+  }).join('');
+  var ghosts='';
+  if(!checked){ for(var g=T.placed.length;g<it.toks.length&&g<T.placed.length+2;g++) ghosts+='<div class="ghost"></div>'; }
+  var bankHtml=it.bank.filter(function(b){return T.placed.indexOf(b.k)<0;}).map(function(b){
+    return '<button class="tok" data-act="tpick" data-k="'+b.k+'"'+(checked?' disabled':'')+'>'+esc(b.t)+'</button>';
+  }).join('');
+  var fb='';
+  if(checked){
+    fb='<div class="feedback" aria-live="polite"><div class="v">'+(T.checked?'נכון!':'לא מדויק. התשובה הנכונה:')+'</div>'+
+      (T.checked?'':'<div class="ar" style="font-size:28px">'+esc(it.s.arabic)+'</div>')+
+      '<div class="lbl">עמ\' '+it.s.page+' · '+esc(it.s.unit)+'</div></div>';
+  }
+  setView(bar('בניית משפט',(T.i+1)+' / '+T.list.length)+progress(T.i/T.list.length)+
+    '<div class="stack"><div class="stack-s"><div class="muted" style="font-size:14px">הרכב בערבית את המשפט:</div><div class="sent-he">'+esc(it.s.hebrew)+'</div></div>'+
+    '<div class="slot-area" aria-label="המשפט שהרכבת">'+placedHtml+ghosts+'</div>'+
+    (checked?'':'<div class="stack-s"><div class="lbl">מילים לבחירה</div><div class="bank">'+bankHtml+'</div></div>')+
+    fb+
+    (checked
+      ? '<button class="btn btn-primary" data-act="tnext">'+(T.i+1>=T.list.length?'לתוצאה':'למשפט הבא')+'</button>'
+      : '<div class="row2"><button class="btn btn-soft" data-act="tclear"'+(T.placed.length?'':' disabled')+'>נקה</button><button class="btn btn-primary" data-act="tcheck"'+(T.placed.length?'':' disabled')+'>בדיקה</button></div>')+
+    '</div>');
+}
+function sentDone(){
+  resultsView('בניית משפט',T.ok+' / '+T.list.length,T.ok===T.list.length?'מושלם':'סיימת את הסבב','התשובה נחשבת נכונה רק כשהסדר זהה לחוברת.','sentence');
+}
+ACT.tpick=function(d){ if(T.checked!==null) return; T.placed.push(+d.k); renderSentence(); };
+ACT.tunplace=function(d){ if(T.checked!==null) return; var k=+d.k; T.placed=T.placed.filter(function(x){return x!==k;}); renderSentence(); };
+ACT.tclear=function(){ T.placed=[]; renderSentence(); };
+ACT.tcheck=function(){
+  var it=T.list[T.i], byK={};
+  it.bank.forEach(function(b){byK[b.k]=b;});
+  var ans=T.placed.map(function(k){return byK[k].t;}).join(' ');
+  T.checked=(ans===it.s.arabic);
+  if(T.checked) T.ok++;
+  renderSentence();
+};
+ACT.tnext=function(){ T.i++; T.placed=[]; T.checked=null; renderSentence(); window.scrollTo(0,0); };
+
+ACT.restart=function(d){ go(d.v,true); };
+
+/* ---------- router ---------- */
+var ROUTES={start:start,home:home,cards:cards,match:match,quiz:quiz,principles:principles,sentence:sentence};
+function route(){
+  if(timer){ clearTimeout(timer); timer=null; }
+  var h=(location.hash||'').replace('#','');
+  var name=ROUTES[h]?h:'start';
+  confirmReset=false;
+  ROUTES[name]();
+  window.scrollTo(0,0);
+}
+function go(name,force){
+  if(location.hash==='#'+name){ route(); }
+  else { location.hash=name; }
+}
+
+view.addEventListener('click',function(e){
+  var t=e.target.closest('[data-act]');
+  if(!t||t.disabled) return;
+  var f=ACT[t.dataset.act];
+  if(f) f(t.dataset,t);
+});
+view.addEventListener('change',function(e){
+  if(e.target&&e.target.id==='scope'){ S.scope=e.target.value; save(); home(); }
+});
+window.addEventListener('hashchange',route);
+
+load();
+route();
+})();
+</script>
+
+</body>
+</html>
