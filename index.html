@@ -297,7 +297,8 @@ function grade(id,ok){
 }
 
 /* ---------- views ---------- */
-var timer=null;
+var timers=[];
+function later(fn,ms){ timers.push(setTimeout(fn,ms)); }
 var ACT={};
 
 function start(){
@@ -422,7 +423,8 @@ function match(){
     if(dup) return;
     seenH.push(w.hebrew); seenA.push(w.arabic); pairs.push(w);
   });
-  M={pairs:pairs,a:shuffle(pairs.slice()),h:shuffle(pairs.slice()),selA:null,selH:null,done:{},mistakes:0,bad:null};
+  var dpool=shuffle(wordPool().slice()).concat(shuffle((S.scope==='names'?NAMES:WORDS).slice()));
+  M={pairs:pairs,a:shuffle(pairs.slice()),h:shuffle(pairs.slice()),selA:null,selH:null,done:{},mistakes:0,bad:null,dpool:dpool,dpos:0};
   renderMatch();
 }
 function renderMatch(){
@@ -438,28 +440,48 @@ function renderMatch(){
   }
   setView(bar('התאמה',doneN+' / '+M.pairs.length)+progress(doneN/M.pairs.length)+
     '<div class="stack"><div><div style="font-size:20px;font-weight:700;line-height:1.3">התאם כל מילה לתרגום שלה</div>'+
-    '<div class="muted" style="font-size:14px">בחר מילה בערבית ואת התרגום שלה בעברית</div></div>'+
+    '<div class="muted" style="font-size:14px">בחר מילה בערבית ואת התרגום שלה בעברית. בערבית יש גם מילים מיותרות.</div></div>'+
     '<div class="mgrid"><div class="stack-s"><div class="lbl">ערבית</div>'+M.a.map(function(w){return btn('a',w);}).join('')+'</div>'+
     '<div class="stack-s"><div class="lbl">עברית</div>'+M.h.map(function(w){return btn('h',w);}).join('')+'</div></div>'+
     '<div class="stat"><span class="muted">טעויות במשחק</span><b>'+M.mistakes+'</b></div></div>');
+}
+/* a decoy is an Arabic word whose translation is not on the board */
+function nextDecoy(){
+  while(M.dpos<M.dpool.length){
+    var c=M.dpool[M.dpos++];
+    var clash=M.pairs.some(function(p){
+      return p.id===c.id||strip(p.arabic)===strip(c.arabic)||sameMeaning(p.hebrew,c.hebrew);
+    })||M.a.some(function(x){ return strip(x.arabic)===strip(c.arabic); });
+    if(!clash) return c;
+  }
+  return null;
+}
+function swapArabic(id){
+  var idx=-1;
+  M.a.forEach(function(w,i){ if(w.id===id) idx=i; });
+  var d=nextDecoy();
+  if(idx>=0&&d) M.a[idx]=d;
+  renderMatch();
 }
 function matchPick(side,id){
   if(M.done[id]||M.bad) return;
   if(side==='a') M.selA=id; else M.selH=id;
   if(M.selA&&M.selH){
     if(M.selA===M.selH){
-      M.done[M.selA]=true; M.selA=null; M.selH=null;
+      var okId=M.selA; M.done[okId]=true; M.selA=null; M.selH=null;
       if(Object.keys(M.done).length===M.pairs.length){
         renderMatch();
-        timer=setTimeout(function(){
+        later(function(){
           resultsView('התאמה',String(M.mistakes),M.mistakes===0?'בלי אף טעות':'טעויות בסבב','כל הזוגות הותאמו.','match');
         },450);
         return;
       }
+      var g=M;
+      later(function(){ if(M===g) swapArabic(okId); },400);
     } else {
       M.mistakes++; M.bad={a:M.selA,h:M.selH}; M.selA=null; M.selH=null;
       renderMatch();
-      timer=setTimeout(function(){ if(M){ M.bad=null; renderMatch(); } },650);
+      later(function(){ if(M){ M.bad=null; renderMatch(); } },650);
       return;
     }
   }
@@ -636,7 +658,7 @@ ACT.restart=function(d){ go(d.v,true); };
 /* ---------- router ---------- */
 var ROUTES={start:start,home:home,cards:cards,match:match,quiz:quiz,principles:principles,sentence:sentence};
 function route(){
-  if(timer){ clearTimeout(timer); timer=null; }
+  timers.forEach(clearTimeout); timers=[];
   var h=(location.hash||'').replace('#','');
   var name=ROUTES[h]?h:'start';
   confirmReset=false;
