@@ -160,6 +160,22 @@ h1,h2,h3{text-wrap:balance}
 .ghost{min-height:52px;width:84px;border:2px dashed var(--line);border-radius:14px}
 .sent-he{font-size:26px;font-weight:700;line-height:1.3}
 
+/* vocabulary */
+.search{width:100%;min-height:52px;border-radius:16px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:0 16px;font-size:18px;font-family:inherit}
+.search::placeholder{color:var(--muted)}
+.vgroup{display:flex;flex-direction:column;gap:8px}
+.vgroup h2{font-size:16px;font-weight:700;display:flex;align-items:baseline;gap:8px}
+.vgroup h2 span{font-size:13px;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums}
+.vrow{background:var(--surface);border-radius:16px;padding:10px 16px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:12px;row-gap:2px;align-items:center}
+.vrow .v-ar{font-size:28px;line-height:1.7}
+.vrow .v-he{font-size:17px;font-weight:600;overflow-wrap:anywhere}
+.vrow .v-meta{grid-column:1/-1;font-size:12px;color:var(--muted)}
+.vrow.long{grid-template-columns:minmax(0,1fr)}
+.vrow.long .v-ar{font-size:24px}
+.tile.wide{flex-direction:row;align-items:center;gap:14px}
+.tile.wide .t{flex:1;min-width:0}
+.vempty{min-height:120px;display:flex;align-items:center;justify-content:center;text-align:center;color:var(--muted);font-size:15px;padding:0 12px}
+
 /* results */
 .res{background:var(--surface);border-radius:24px;padding:28px 20px;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center}
 .res .big{font-size:54px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
@@ -259,7 +275,8 @@ var ICON={
   quiz:'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/></svg>',
   book:'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h11a3 3 0 013 3v13H8a3 3 0 01-3-3z"/><path d="M9 9h6"/></svg>',
   blocks:'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="9" width="7" height="6" rx="1.5"/><rect x="14" y="9" width="7" height="6" rx="1.5"/></svg>',
-  pin:'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s7-6.2 7-11a7 7 0 10-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>'
+  pin:'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s7-6.2 7-11a7 7 0 10-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>',
+  search:'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>'
 };
 
 function setView(html,start){
@@ -344,6 +361,7 @@ function home(){
       '<a class="tile" href="#sentence"><div class="ico">'+ICON.blocks+'</div><div><div class="n">בניית משפט</div><div class="d">קוביות מילים</div></div></a>'+
       '<button class="tile" data-act="names"><div class="ico">'+ICON.pin+'</div><div><div class="n">שמות ומקומות</div><div class="d">זיהוי במבחן</div></div></button>'+
     '</div></div>'+
+    '<a class="tile wide" href="#vocab"><div class="ico">'+ICON.search+'</div><div class="t"><div class="n">אוצר מילים</div><div class="d">חיפוש בעברית ובערבית</div></div></a>'+
     '<div class="stack-s"><h2 style="font-size:18px">יחידות</h2>'+units+'</div>'+
     '<div class="foot">'+
       '<div>ההתקדמות נשמרת בדפדפן של הטלפון הזה, ולכל אחד יש התקדמות משלו.</div>'+
@@ -655,8 +673,106 @@ ACT.tnext=function(){ T.i++; T.placed=[]; T.checked=null; renderSentence(); wind
 
 ACT.restart=function(d){ go(d.v,true); };
 
+/* --- vocabulary search --- */
+var V={q:'',f:'all'}, VIDX=null;
+var VLAB={w:'מילים',n:'שמות ומקומות',s:'משפטים וביטויים'};
+function normHe(s){
+  return s.replace(/[֑-ׇ]/g,'').replace(/ך/g,'כ').replace(/ם/g,'מ')
+    .replace(/ן/g,'נ').replace(/ף/g,'פ').replace(/ץ/g,'צ').toLowerCase();
+}
+function normAr(s){
+  return strip(s).replace(/ى/g,'ي').replace(/ة/g,'ه').replace(/[؟،]/g,'');
+}
+function vidx(){
+  if(VIDX) return VIDX;
+  VIDX=[];
+  function add(type,list){
+    list.forEach(function(x){
+      var he=normHe(x.hebrew), ar=normAr(x.arabic);
+      VIDX.push({type:type,x:x,he:he,ar:ar,
+        heT:he.split(/[^א-ת]+/).filter(Boolean),
+        arT:ar.split(/\s+/).filter(Boolean)});
+    });
+  }
+  add('w',WORDS); add('n',NAMES); add('s',SENTS);
+  return VIDX;
+}
+function vquery(raw){
+  var s=raw.trim();
+  var hasAr=/[؀-ۿ]/.test(s), hasHe=/[א-ת]/.test(s);
+  var q={ar:[],he:'',empty:!s,latin:!!s&&!hasAr&&!hasHe};
+  if(hasAr){
+    var a=normAr(s).replace(/\s+/g,' ').trim(); q.ar=[a];
+    var b=a.replace(/^ال/,''); if(b&&b!==a) q.ar.push(b);
+  }
+  if(hasHe) q.he=normHe(s).replace(/[^א-ת\s]/g,'').replace(/\s+/g,' ').trim();
+  return q;
+}
+/* 0 exact word, 1 word starts with, 2 contained; null no match */
+function vscore(it,q){
+  if(q.empty) return 0;
+  var best=null;
+  function take(s){ if(best===null||s<best) best=s; }
+  q.ar.forEach(function(v){
+    if(it.arT.some(function(t){return t===v||t==='ال'+v;})) take(0);
+    else if(it.arT.some(function(t){return t.indexOf(v)===0||t.indexOf('ال'+v)===0;})) take(1);
+    else if(it.ar.indexOf(v)>=0) take(2);
+  });
+  if(q.he){
+    if(it.heT.indexOf(q.he)>=0) take(0);
+    else if(it.heT.some(function(t){return t.indexOf(q.he)===0;})) take(1);
+    else if(it.he.indexOf(q.he)>=0) take(2);
+  }
+  return best;
+}
+function vresults(){
+  var q=vquery(V.q), out={w:[],n:[],s:[]};
+  vidx().forEach(function(it,i){
+    var sc=vscore(it,q);
+    if(sc!==null) out[it.type].push({it:it,sc:sc,i:i});
+  });
+  ['w','n','s'].forEach(function(t){ out[t].sort(function(a,b){return a.sc-b.sc||a.i-b.i;}); });
+  return out;
+}
+function vrow(it){
+  var x=it.x;
+  return '<div class="vrow'+(it.type==='s'?' long':'')+'"><div class="v-ar ar">'+esc(x.arabic)+'</div>'+
+    '<div class="v-he">'+esc(x.hebrew)+'</div>'+
+    '<div class="v-meta">עמ\' '+x.page+(x.unit?' · '+esc(x.unit):'')+'</div></div>';
+}
+function vocabDyn(){
+  var r=vresults(), total=r.w.length+r.n.length+r.s.length, q=vquery(V.q);
+  function chip(k,label,n){ return '<button data-act="vf" data-v="'+k+'" aria-pressed="'+(V.f===k)+'">'+label+' '+n+'</button>'; }
+  var chips='<div class="seg" role="group" aria-label="סוג תוצאות">'+chip('all','הכול',total)+chip('w','מילים',r.w.length)+
+    chip('n','שמות ומקומות',r.n.length)+chip('s','משפטים',r.s.length)+'</div>';
+  var groups='';
+  ['w','n','s'].forEach(function(t){
+    if((V.f!=='all'&&V.f!==t)||!r[t].length) return;
+    groups+='<div class="vgroup"><h2>'+VLAB[t]+'<span>'+r[t].length+'</span></h2>'+r[t].map(function(m){return vrow(m.it);}).join('')+'</div>';
+  });
+  var shown=V.f==='all'?total:r[V.f].length;
+  if(!shown){
+    groups='<div class="vempty" aria-live="polite">'+(q.latin
+      ?'החיפוש עובד בעברית ובערבית. אפשר לכתוב בלי ניקוד.'
+      :(total?'אין תוצאות בסוג הזה. בחר "הכול" כדי לראות את שאר התוצאות.':'לא נמצאו תוצאות. נסה חלק מהמילה, או כתוב בלי ניקוד.'))+'</div>';
+  }
+  return chips+groups;
+}
+function vupdate(){
+  var el=document.getElementById('vdyn');
+  if(el) el.innerHTML=vocabDyn();
+}
+function vocab(){
+  V.q=''; V.f='all';
+  setView(bar('אוצר מילים','')+
+    '<div class="stack"><input class="search" id="q" type="search" dir="auto" placeholder="חפש בעברית או בערבית" aria-label="חיפוש באוצר המילים" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search">'+
+    '<div class="muted" style="font-size:14px">אפשר לחפש בלי ניקוד ובכל חלק של המילה.</div>'+
+    '<div id="vdyn" class="stack">'+vocabDyn()+'</div></div>');
+}
+ACT.vf=function(d){ V.f=d.v; vupdate(); };
+
 /* ---------- router ---------- */
-var ROUTES={start:start,home:home,cards:cards,match:match,quiz:quiz,principles:principles,sentence:sentence};
+var ROUTES={start:start,home:home,cards:cards,match:match,quiz:quiz,principles:principles,sentence:sentence,vocab:vocab};
 function route(){
   timers.forEach(clearTimeout); timers=[];
   var h=(location.hash||'').replace('#','');
@@ -678,6 +794,9 @@ view.addEventListener('click',function(e){
 });
 view.addEventListener('change',function(e){
   if(e.target&&e.target.id==='scope'){ S.scope=e.target.value; save(); home(); }
+});
+view.addEventListener('input',function(e){
+  if(e.target&&e.target.id==='q'){ V.q=e.target.value; vupdate(); }
 });
 window.addEventListener('hashchange',route);
 
