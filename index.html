@@ -267,6 +267,17 @@ h1,h2,h3{text-wrap:balance;font-family:var(--disp)}
   .confetti{display:none}
 }
 
+/* home pager: two swipeable pages */
+.tabs{margin-bottom:0}
+.tabs button{flex:1;justify-content:center}
+.pager{direction:ltr;display:flex;align-items:flex-start;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;margin-inline:-16px}
+.pager::-webkit-scrollbar{display:none}
+.pg{direction:rtl;flex:0 0 100%;min-width:0;box-sizing:border-box;padding:0 16px 10px;scroll-snap-align:start;scroll-snap-stop:always}
+.hero.done{background:var(--h-green);color:var(--h-green-o)}
+.hero.done .btn{background:var(--h-green-o);color:var(--h-green-i)}
+.donerow{display:flex;align-items:center;gap:14px}
+.vmark{flex:none;width:52px;height:52px;border-radius:50%;background:var(--h-green-o);color:var(--h-green-i);display:grid;place-items:center}
+.vmark svg{width:30px;height:30px;stroke-width:3}
 </style>
 
 <div id="bg" aria-hidden="true"></div>
@@ -286,6 +297,8 @@ var UNITS=[];
 WORDS.forEach(function(w){ if(UNITS.indexOf(w.unit)<0) UNITS.push(w.unit); });
 
 var S={cards:{},scope:'all',dir:'ar',quiz:'ar2he'};
+function dayKey(){ var d=new Date(); return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate(); }
+function dailyToday(){ return (S.daily&&S.daily.k===dayKey())?S.daily:null; }
 function load(){
   try{
     var raw=localStorage.getItem(KEY);
@@ -430,6 +443,18 @@ function home(){
   var dueN=q.filter(function(w){return S.cards[w.id];}).length;
   var heroT=n?(n===1?'כרטיס אחד מחכה לך':n+' כרטיסים מחכים לך'):'הכול מעודכן להיום';
   var heroS=n?(dueN+' לחזרה · '+(n-dueN)+' חדשים'):'אפשר לתרגל בכל זאת או לבחור מצב אחר';
+  var dd=dailyToday();
+  var heroHtml;
+  if(dd){
+    var rounds=dd.n===1?'סבב אחד':dd.n+' סבבים';
+    heroHtml='<div class="hero done"><div class="donerow"><span class="vmark">'+ICON.check+'</span><div><div style="font-size:14px;font-weight:600">התרגול להיום</div>'+
+      '<div class="t">הושלם, כל הכבוד!</div><div style="font-size:14px;margin-top:2px">'+rounds+' · '+dd.cards+' כרטיסים</div></div></div>'+
+      '<div style="font-weight:600">רוצה לעשות עוד סבב?</div>'+
+      '<a class="btn" href="#cards">כן, עוד סבב</a></div>';
+  } else {
+    heroHtml='<div class="hero"><div><div style="font-size:14px;font-weight:600">התרגול להיום</div><div class="t">'+heroT+'</div><div style="font-size:14px;margin-top:2px">'+heroS+'</div></div>'+
+      '<a class="btn" href="#cards">'+(n?'התחל חזרה':'תרגל בכל זאת')+'</a></div>';
+  }
   var opts=[['all','כל החומר']].concat(UNITS.map(function(u,i){return ['u'+i,u];}),[['names','שמות ומקומות']]);
   var optHtml=opts.map(function(o){
     return '<option value="'+o[0]+'"'+(S.scope===o[0]?' selected':'')+'>'+esc(o[1])+'</option>';
@@ -448,10 +473,7 @@ function home(){
   var best=S.examBest?('השיא שלך: '+S.examBest.s+' / '+S.examBest.t):'20 שאלות מכל החומר';
   var crownS=ICON.crown.replace('width="72" height="72"','width="30" height="30"');
 
-  setView('<div class="stack" style="gap:20px">'+
-    '<div class="brand"><div class="crown">'+crownS+'</div><div><h1>ממלכת רוני</h1><div class="sub">ערבית ספרותית למתחילים</div></div></div>'+
-    '<div class="hero"><div><div style="font-size:14px;font-weight:600">התרגול להיום</div><div class="t">'+heroT+'</div><div style="font-size:14px;margin-top:2px">'+heroS+'</div></div>'+
-      '<a class="btn" href="#cards">'+(n?'התחל חזרה':'תרגל בכל זאת')+'</a></div>'+
+  var page1='<div class="stack" style="gap:20px">'+heroHtml+
     '<div class="field"><label class="lbl" for="scope">מה לתרגל</label><select class="sel" id="scope">'+optHtml+'</select></div>'+
     '<div class="stack-s"><h2 style="font-size:18px">מצבי תרגול</h2><div class="tiles">'+
       '<a class="tile m-teal" href="#cards"><div class="ico">'+ICON.cards+'</div><div><div class="n">כרטיסיות</div><div class="d">חזרה מרווחת</div></div></a>'+
@@ -463,20 +485,57 @@ function home(){
     '</div></div>'+
     '<a class="tile wide solid m-coral" href="#exam"><div class="ico">'+ICON.trophy+'</div><div class="t"><div class="n">מבחן כללי</div><div class="d">'+best+'</div></div></a>'+
     '<a class="tile wide m-slate" href="#vocab"><div class="ico">'+ICON.search+'</div><div class="t"><div class="n">אוצר מילים</div><div class="d">חיפוש בעברית ובערבית</div></div></a>'+
-    '<div class="stack-s"><h2 style="font-size:18px">יחידות</h2>'+units+'</div>'+
+    '</div>';
+  var page2='<div class="stack" style="gap:20px"><div class="stack-s"><h2 style="font-size:18px">יחידות</h2>'+
+    '<div class="muted" style="font-size:14px">בחר יחידה כדי לתרגל רק אותה. הבחירה חלה על כל מצבי התרגול.</div>'+units+'</div>'+
     '<div class="foot">'+
       '<div>ההתקדמות נשמרת בדפדפן של הטלפון הזה, ולכל אחד יש התקדמות משלו.</div>'+
       '<div>כדי לפתוח כמו אפליקציה: בתפריט הדפדפן בחר "הוסף למסך הבית".</div>'+
       (confirmReset
         ? '<div class="row2"><button class="btn btn-bad" style="min-height:48px;font-size:15px" data-act="resetYes">כן, למחוק</button><button class="btn btn-soft" style="min-height:48px;font-size:15px" data-act="resetNo">ביטול</button></div>'
         : '<button class="link-btn" data-act="reset">איפוס ההתקדמות</button>')+
-    '</div></div>');
+    '</div></div>';
+
+  setView('<div class="stack" style="gap:16px">'+
+    '<div class="brand"><div class="crown">'+crownS+'</div><div><h1>ממלכת רוני</h1><div class="sub">ערבית ספרותית למתחילים</div></div></div>'+
+    '<div class="seg tabs" role="group" aria-label="עמודים">'+
+      '<button data-act="hpage" data-v="0" aria-pressed="'+(HP===0)+'">ראשי</button>'+
+      '<button data-act="hpage" data-v="1" aria-pressed="'+(HP===1)+'">יחידות</button></div>'+
+    '<div class="pager" id="pager"><section class="pg" aria-label="ראשי">'+page1+'</section><section class="pg" aria-label="יחידות">'+page2+'</section></div>'+
+    '</div>');
+  pagerTo(HP,false);
 }
+var HP=0, RTLSIGN=null;
+function rtlSign(){
+  if(RTLSIGN!==null) return RTLSIGN;
+  var d=document.createElement('div'); d.dir='rtl';
+  d.style.cssText='width:50px;height:10px;overflow:scroll;position:absolute;visibility:hidden';
+  d.innerHTML='<div style="width:100px;height:1px"></div>';
+  document.body.appendChild(d); d.scrollLeft=-10;
+  RTLSIGN=d.scrollLeft<0?-1:1; document.body.removeChild(d);
+  return RTLSIGN;
+}
+function pagerTo(i,smooth){
+  var p=document.getElementById('pager'); if(!p||!p.scrollTo) return;
+  var x=i?(p.scrollWidth-p.clientWidth):0;
+  p.scrollTo({left:x,behavior:smooth?'smooth':'auto'});
+}
+function tabsSync(){
+  var b=view.querySelectorAll('.tabs button');
+  for(var k=0;k<b.length;k++) b[k].setAttribute('aria-pressed',String(+b[k].dataset.v===HP));
+}
+ACT.hpage=function(d){ HP=+d.v; tabsSync(); pagerTo(HP,true); };
+view.addEventListener('scroll',function(e){
+  var p=e.target; if(!p||p.id!=='pager'||!p.clientWidth) return;
+  var n=Math.round(Math.abs(p.scrollLeft)/p.clientWidth);
+  if(n!==HP&&(n===0||n===1)){ HP=n; tabsSync(); }
+},true);
+
 ACT.scope=function(d){ S.scope=d.v; save(); home(); window.scrollTo(0,0); };
 ACT.names=function(){ S.scope='names'; S.quiz='ar2he'; save(); go('quiz'); };
 ACT.reset=function(){ confirmReset=true; home(); };
 ACT.resetNo=function(){ confirmReset=false; home(); };
-ACT.resetYes=function(){ confirmReset=false; S.cards={}; save(); home(); };
+ACT.resetYes=function(){ confirmReset=false; S.cards={}; S.daily=null; S.examBest=null; HP=0; save(); home(); };
 
 /* --- flashcards --- */
 var C=null;
@@ -513,6 +572,11 @@ function renderCards(){
 }
 function cardsDone(){
   var total=C.known+C.again;
+  if(!C.practice){
+    var dk=dayKey();
+    if(!S.daily||S.daily.k!==dk) S.daily={k:dk,n:0,cards:0};
+    S.daily.n++; S.daily.cards+=C.known; save();
+  }
   resultsView('כרטיסיות',String(C.known),'מתוך '+total+' כרטיסים ידעת',
     C.practice?'זה היה תרגול חופשי, לוח החזרות לא השתנה.':'הכרטיסים שלא ידעת יחזרו בסבב הבא.','cards',starsFor(total?C.known/total:0));
 }
@@ -975,6 +1039,7 @@ function route(){
   var name=ROUTES[h]?h:'start';
   confirmReset=false;
   view.className='m-'+(MODES[name]||'teal');
+  if(name!=='home') HP=0;
   ROUTES[name]();
   window.scrollTo(0,0);
 }
