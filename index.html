@@ -117,6 +117,17 @@ h1,h2,h3{text-wrap:balance;font-family:var(--disp)}
 /* small pieces */
 .chip{display:inline-block;font-size:13px;font-weight:600;background:var(--ms);color:var(--mi);padding:4px 10px;border-radius:12px}
 .chip.warn{background:var(--warn-bg);color:var(--warn-ink)}
+.chip.new{background:var(--h-green-s);color:var(--h-green-i)}
+.chip.lv{background:var(--surface-2);color:var(--ink)}
+/* levels */
+.lvbar{display:flex;gap:2px;height:14px;border-radius:7px;overflow:hidden;background:var(--surface-2)}
+.lvbar i{display:block;height:100%}
+.lvleg{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:14px;color:var(--muted)}
+.lvleg b{color:var(--ink);font-variant-numeric:tabular-nums}
+.lvleg .sw{display:inline-block;width:10px;height:10px;border-radius:5px;margin-inline-end:6px}
+.wk{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--surface);border:2px solid var(--line);border-radius:16px;padding:10px 14px}
+.wk .ar{font-size:22px;line-height:1.5}
+.wk .cnt{font-size:13px;font-weight:600;background:var(--warn-bg);color:var(--warn-ink);padding:4px 10px;border-radius:12px;white-space:nowrap}
 .seg{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
 .seg button{min-height:38px;padding:0 14px;border-radius:20px;border:2px solid var(--line);background:var(--surface);color:var(--muted);font-family:var(--disp);font-weight:600;font-size:14px}
 .seg button[aria-pressed="true"]{background:var(--ms);color:var(--mi);border-color:var(--m)}
@@ -322,6 +333,11 @@ function load(){
     if(raw){ var o=JSON.parse(raw); if(o&&typeof o==='object'){ for(var k in o){ S[k]=o[k]; } } }
   }catch(e){}
   if(!S.cards||typeof S.cards!=='object') S.cards={};
+  /* older saves only had level and due date: give them right/wrong counters */
+  for(var id in S.cards){
+    var c=S.cards[id];
+    if(c&&typeof c==='object'&&c.r===undefined){ c.r=c.b||0; c.x=c.b===0?1:0; }
+  }
 }
 function save(){ try{ localStorage.setItem(KEY,JSON.stringify(S)); }catch(e){} }
 
@@ -429,19 +445,89 @@ function resultsView(title,big,heading,sub,mode,starN,extra){
     '<a class="btn btn-soft" href="#home">חזרה לבית</a></div>');
 }
 
-/* ---------- spaced repetition ---------- */
+/* ---------- spaced repetition + levels ----------
+   Every word has a level b (0-5), a due time d, and counters r (right) / x (wrong).
+   Right answer: level up and the word comes back later. Wrong answer: level drops by 2
+   and it comes back right away. Words with a high error rate are flagged weak, come back
+   sooner, and get picked first. New words are added gradually, in the order of the class. */
+var MAXLV=5, QSIZE=10;
+function errRate(c){ return c?((c.x||0)+0.5)/((c.r||0)+(c.x||0)+1):0.5; }
+function isWeak(c){ return !!c&&(c.x||0)>=2&&errRate(c)>=0.4; }
+function score(w,t){
+  var c=S.cards[w.id]; if(!c) return 0;
+  var over=Math.max(0,Math.min(7,(t-c.d)/DAY));
+  return (MAXLV-c.b)+errRate(c)*4+over*0.3;
+}
 function cardQueue(){
   var ws=wordPool(), t=Date.now();
-  var due=ws.filter(function(w){return S.cards[w.id]&&S.cards[w.id].d<=t;})
-    .sort(function(a,b){return S.cards[a.id].d-S.cards[b.id].d;});
-  var fresh=ws.filter(function(w){return !S.cards[w.id];});
-  return due.concat(fresh).slice(0,10);
+  var due=[], idleWeak=[], fresh=[], learning=0;
+  ws.forEach(function(w){
+    var c=S.cards[w.id];
+    if(!c){ fresh.push(w); return; }
+    if(c.b<=1) learning++;
+    if(c.d<=t) due.push(w);
+    else if(isWeak(c)) idleWeak.push(w);
+  });
+  function bySc(a,b){ return score(b,t)-score(a,t); }
+  due.sort(bySc); idleWeak.sort(bySc);
+  var maxNew=learning>=14?1:(learning>=8?3:5);
+  var newN=Math.min(fresh.length,maxNew);
+  var q=due.slice(0,QSIZE-newN).concat(fresh.slice(0,newN));
+  var room=QSIZE-q.length;
+  if(room>0) q=q.concat(idleWeak.slice(0,room));
+  room=QSIZE-q.length;
+  if(room>0) q=q.concat(fresh.slice(newN,newN+room));
+  return shuffle(q);
 }
+/* returns the level change: positive = went up, negative = dropped */
 function grade(id,ok){
-  var c=S.cards[id]||{b:0,d:0};
-  if(ok){ c.b=Math.min(5,c.b+1); c.d=Date.now()+INT[c.b]*DAY; }
-  else { c.b=0; c.d=Date.now(); }
+  var old=S.cards[id], prev=old?old.b:0;
+  var c=old||{b:0,d:0,r:0,x:0};
+  c.t=Date.now();
+  if(ok){
+    c.r=(c.r||0)+1; c.b=Math.min(MAXLV,c.b+1);
+    c.d=Date.now()+INT[c.b]*DAY*(isWeak(c)?0.5:1);
+  } else {
+    c.x=(c.x||0)+1; c.b=Math.max(0,c.b-2); c.d=Date.now();
+  }
   S.cards[id]=c; save();
+  return c.b-prev;
+}
+function levelStats(ws){
+  var o={fresh:0,learn:0,mid:0,top:0};
+  ws.forEach(function(w){
+    var c=S.cards[w.id];
+    if(!c) o.fresh++; else if(c.b<=1) o.learn++; else if(c.b<=3) o.mid++; else o.top++;
+  });
+  return o;
+}
+function lvBlock(ws){
+  var o=levelStats(ws), tot=ws.length||1;
+  var segs=[['fresh','חדשות','slate'],['learn','בלמידה','coral'],['mid','מתקדמות','orange'],['top','שולטות','green']];
+  var bar=segs.map(function(s){
+    return o[s[0]]?'<i style="flex:'+o[s[0]]+';background:var(--h-'+s[2]+')"></i>':'';
+  }).join('');
+  var leg=segs.map(function(s){
+    return '<span><span class="sw" style="background:var(--h-'+s[2]+')"></span>'+s[1]+' <b>'+o[s[0]]+'</b></span>';
+  }).join('');
+  return '<div class="stack-s"><h2 style="font-size:18px">הרמות שלי</h2>'+
+    '<div class="lvbar" role="img" aria-label="'+segs.map(function(s){return s[1]+' '+o[s[0]];}).join(', ')+' מתוך '+tot+'">'+bar+'</div>'+
+    '<div class="lvleg">'+leg+'</div></div>';
+}
+function timesTxt(n){ return n===1?'טעית פעם אחת':'טעית '+n+' פעמים'; }
+function weakRows(list){
+  return list.map(function(w){
+    var c=S.cards[w.id];
+    return '<div class="wk"><div><div class="ar">'+esc(w.arabic)+'</div><div class="muted" style="font-size:14px">'+esc(w.hebrew)+'</div></div>'+
+      '<span class="cnt">'+timesTxt(c.x||1)+'</span></div>';
+  }).join('');
+}
+function weakList(ws,n){
+  return ws.filter(function(w){ return S.cards[w.id]&&(S.cards[w.id].x||0)>=1; })
+    .sort(function(a,b){
+      var ca=S.cards[a.id], cb=S.cards[b.id];
+      return (isWeak(cb)-isWeak(ca))||(cb.x-ca.x)||(errRate(cb)-errRate(ca));
+    }).slice(0,n);
 }
 
 /* ---------- views ---------- */
@@ -460,9 +546,10 @@ var confirmReset=false;
 function home(){
   fixScope();
   var q=cardQueue(), n=q.length;
-  var dueN=q.filter(function(w){return S.cards[w.id];}).length;
+  var weakN=q.filter(function(w){return isWeak(S.cards[w.id]);}).length;
+  var dueN=q.filter(function(w){return S.cards[w.id];}).length-weakN;
   var heroT=n?(n===1?'כרטיס אחד מחכה לך':n+' כרטיסים מחכים לך'):'הכול מעודכן להיום';
-  var heroS=n?(dueN+' לחזרה · '+(n-dueN)+' חדשים'):'אפשר לתרגל בכל זאת או לבחור מצב אחר';
+  var heroS=n?[dueN?dueN+' לחזרה':'',weakN?weakN+' לחיזוק':'',(n-dueN-weakN)?(n-dueN-weakN)+' חדשים':''].filter(Boolean).join(' · '):'אפשר לתרגל בכל זאת או לבחור מצב אחר';
   var dd=dailyToday();
   var heroHtml;
   if(dd){
@@ -495,8 +582,9 @@ function home(){
 
   var page1='<div class="stack" style="gap:20px">'+heroHtml+
     '<div class="field"><label class="lbl" for="scope">מה לתרגל</label><select class="sel" id="scope">'+optHtml+'</select></div>'+
+    lvBlock(wordPool())+
     '<div class="stack-s"><h2 style="font-size:18px">מצבי תרגול</h2><div class="tiles">'+
-      '<a class="tile m-teal" href="#cards"><div class="ico">'+ICON.cards+'</div><div><div class="n">כרטיסיות</div><div class="d">חזרה מרווחת</div></div></a>'+
+      '<a class="tile m-teal" href="#cards"><div class="ico">'+ICON.cards+'</div><div><div class="n">כרטיסיות</div><div class="d">לפי רמות</div></div></a>'+
       '<a class="tile m-orange" href="#match"><div class="ico">'+ICON.match+'</div><div><div class="n">התאמה</div><div class="d">ערבית ↔ עברית</div></div></a>'+
       '<a class="tile m-purple" href="#quiz"><div class="ico">'+ICON.quiz+'</div><div><div class="n">מבחן</div><div class="d">רב-ברירה</div></div></a>'+
       '<a class="tile m-blue" href="#principles"><div class="ico">'+ICON.book+'</div><div><div class="n">עקרונות</div><div class="d">הסבר ודוגמאות</div></div></a>'+
@@ -508,7 +596,10 @@ function home(){
     '<a class="tile wide m-green" href="#work"><div class="ico">'+ICON.blocks+'</div><div class="t"><div class="n">מיון והטיות</div><div class="d">קבוצות, מי לא שייך, פעלים בעבר</div></div></a>'+
     '<a class="tile wide m-slate" href="#vocab"><div class="ico">'+ICON.search+'</div><div class="t"><div class="n">אוצר מילים</div><div class="d">חיפוש בעברית ובערבית</div></div></a>'+
     '</div>';
-  var page2='<div class="stack" style="gap:20px"><div class="stack-s"><h2 style="font-size:18px">יחידות</h2>'+
+  var wl=weakList(wordPool(),5);
+  var weakHtml=wl.length?('<div class="stack-s"><h2 style="font-size:18px">מילים שכדאי לחזק</h2>'+
+    '<div class="muted" style="font-size:14px">המילים שטעית בהן הכי הרבה. הן חוזרות בכרטיסיות לפני כל השאר.</div>'+weakRows(wl)+'</div>'):'';
+  var page2='<div class="stack" style="gap:20px">'+weakHtml+'<div class="stack-s"><h2 style="font-size:18px">יחידות</h2>'+
     '<div class="muted" style="font-size:14px">בחר יחידה כדי לתרגל רק אותה. הבחירה חלה על כל מצבי התרגול.</div>'+units+'</div>'+
     '<div class="foot">'+
       '<div>ההתקדמות נשמרת בדפדפן של הטלפון הזה, ולכל אחד יש התקדמות משלו.</div>'+
@@ -563,8 +654,14 @@ ACT.resetYes=function(){ confirmReset=false; S.cards={}; S.daily=null; S.examBes
 var C=null;
 function cards(){
   var queue=cardQueue(), practice=false;
-  if(!queue.length){ practice=true; queue=shuffle(wordPool()).slice(0,10); }
-  C={queue:queue,i:0,flip:false,known:0,again:0,rq:{},practice:practice};
+  if(!queue.length){
+    /* nothing due: free practice, weakest words first (the schedule does not change) */
+    practice=true;
+    var t=Date.now();
+    queue=wordPool().map(function(w){return [score(w,t)+Math.random()*2,w];})
+      .sort(function(a,b){return b[0]-a[0];}).slice(0,QSIZE).map(function(p){return p[1];});
+  }
+  C={queue:queue,i:0,flip:false,known:0,again:0,rq:{},practice:practice,up:0,missed:[]};
   renderCards();
 }
 function renderCards(){
@@ -578,13 +675,21 @@ function renderCards(){
     front='<div class="lbl">עברית</div><div class="big-he">'+esc(w.hebrew)+'</div><div class="muted" style="font-size:14px">הקש כדי לראות את הערבית</div>';
     back='<div class="lbl">ערבית</div><div class="ar big-ar">'+esc(w.arabic)+'</div>';
   }
+  var sc=S.cards[w.id], lvChip, weakChip='';
+  if(!sc) lvChip='<span class="chip new">חדשה</span>';
+  else {
+    lvChip='<span class="chip lv">רמה '+sc.b+' מתוך '+MAXLV+'</span>';
+    if(isWeak(sc)) weakChip='<span class="chip warn">לחיזוק · '+timesTxt(sc.x)+'</span>';
+    else if(sc.x>0) weakChip='<span class="chip lv">'+timesTxt(sc.x)+'</span>';
+  }
   var exHtml=ex?('<div class="ex"><div class="lbl">מתוך התרגול</div><div class="ar ex-ar">'+esc(ex.arabic)+'</div><div>'+esc(ex.hebrew)+'</div></div>'):'';
   setView(bar('כרטיסיות',(C.i+1)+' / '+C.queue.length)+progress(C.i/C.queue.length)+
     '<div class="seg" role="group" aria-label="כיוון">'+
       '<button data-act="dir" data-v="ar" aria-pressed="'+arFirst+'">ערבית קודם</button>'+
       '<button data-act="dir" data-v="he" aria-pressed="'+(!arFirst)+'">עברית קודם</button></div>'+
     '<div class="stack-s" style="margin-bottom:6px"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="chip">'+esc(w.unit)+'</span><span class="lbl">'+pgLabel(w)+'</span>'+
-      (C.practice?'<span class="chip warn">תרגול חופשי</span>':'')+'</div></div>'+
+      (C.practice?'<span class="chip warn">תרגול חופשי</span>':'')+'</div>'+
+      '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">'+lvChip+weakChip+'</div></div>'+
     '<div class="stack">'+
     '<button class="flash" data-act="flip" aria-label="הפוך כרטיס">'+(C.flip?(back+exHtml):front)+'</button>'+
     (C.flip
@@ -599,19 +704,29 @@ function cardsDone(){
     if(!S.daily||S.daily.k!==dk) S.daily={k:dk,n:0,cards:0};
     S.daily.n++; S.daily.cards+=C.known; save();
   }
+  var extra='';
+  if(!C.practice){
+    var sum=(C.up?'<span class="chip new">'+C.up+' עלו רמה</span>':'')+
+      (C.missed.length?'<span class="chip warn">'+C.missed.length+' ירדו רמה</span>':'');
+    if(sum) extra+='<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">'+sum+'</div>';
+    if(C.missed.length) extra+='<div class="stack-s"><h2 style="font-size:18px">מילים לחיזוק</h2>'+weakRows(C.missed)+'</div>';
+  }
   resultsView('כרטיסיות',String(C.known),'מתוך '+total+' כרטיסים ידעת',
-    C.practice?'זה היה תרגול חופשי, לוח החזרות לא השתנה.':'הכרטיסים שלא ידעת יחזרו בסבב הבא.','cards',starsFor(total?C.known/total:0));
+    C.practice?'זה היה תרגול חופשי, לוח החזרות לא השתנה.':'מילים שטעית בהן יחזרו מוקדם יותר ויופיעו קודם בסבב הבא.','cards',starsFor(total?C.known/total:0),extra);
 }
 ACT.flip=function(){ C.flip=!C.flip; renderCards(); };
 ACT.dir=function(d){ S.dir=d.v; save(); if(C){ C.flip=false; renderCards(); } };
 ACT.know=function(){
   var w=C.queue[C.i];
-  if(!C.practice) grade(w.id,true);
+  if(!C.practice&&grade(w.id,true)>0) C.up++;
   C.known++; C.i++; C.flip=false; renderCards();
 };
 ACT.again=function(){
   var w=C.queue[C.i];
-  if(!C.practice) grade(w.id,false);
+  if(!C.practice){
+    grade(w.id,false);
+    if(C.missed.indexOf(w)<0) C.missed.push(w);
+  }
   C.again++;
   if(!C.rq[w.id]){ C.rq[w.id]=true; C.queue.push(w); }
   C.i++; C.flip=false; renderCards();
@@ -849,7 +964,7 @@ ACT.qpick=function(d){
   var ok=!!q.opts[k].ok;
   Q.log.push({q:q,ok:ok});
   if(ok) Q.score++;
-  else if(q.w){ S.cards[q.w.id]={b:0,d:Date.now()}; save(); }
+  else if(q.w){ grade(q.w.id,false); }
   renderQuiz();
 };
 ACT.qnext=function(){ Q.i++; Q.picked=null; renderQuiz(); window.scrollTo(0,0); };
