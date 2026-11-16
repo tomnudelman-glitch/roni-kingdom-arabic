@@ -342,6 +342,23 @@ h1,h2,h3{text-wrap:balance;font-family:var(--disp)}
 .pnote .ar{font-size:18px}
 .pnote{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 14px}
 .pe{white-space:nowrap}
+
+/* home: four topic pages */
+.tabs button{padding:0 4px;font-size:14px}
+.hero{padding:16px;gap:10px}
+.hero .btn{min-height:44px}
+.pager{transition:height .18s ease}
+@media (prefers-reduced-motion: reduce){ .pager{transition:none} }
+#pager .lvleg{gap:4px 10px;font-size:13px}
+#pager .lvleg .sw{margin-inline-end:4px}
+#pager .tile.wide{padding:12px 14px}
+#pager .unit{padding:10px 14px;gap:5px}
+#pager .unit .progress{height:8px}
+#pager .ugrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+#pager .ugrid .unit{padding:10px 12px;gap:5px}
+#pager .ugrid .unit .top{flex-direction:column;align-items:flex-start;gap:0}
+#pager .ugrid .unit .nm{font-size:15px;line-height:1.25}
+#pager .ugrid .unit .meta{font-size:12px}
 </style>
 
 <div id="bg" aria-hidden="true"></div>
@@ -606,9 +623,9 @@ function home(){
     var learned=items.filter(function(w){return S.cards[w.id]&&S.cards[w.id].b>=1;}).length;
     var frac=items.length?learned/items.length:0;
     return '<button class="unit" data-act="scope" data-v="'+key+'" aria-pressed="'+(S.scope===key)+'">'+
-      '<div class="top"><div class="nm">'+esc(name)+'</div><div class="meta">'+items.length+' מילים · '+esc(pageRange(items))+'</div></div>'+
+      '<div class="top"><div class="nm">'+esc(name)+'</div><div class="meta">נלמדו '+learned+' מתוך '+items.length+'</div></div>'+
       '<div class="progress" style="margin:0" role="presentation"><i style="width:'+Math.round(frac*100)+'%"></i></div>'+
-      '<div class="meta">נלמדו '+learned+' מתוך '+items.length+'</div></button>';
+      '<div class="meta">'+items.length+' מילים · '+esc(pageRange(items))+'</div></button>';
   }
   var units=UNITS.map(function(u,i){
     return unitRow('u'+i,u,WORDS.filter(function(w){return w.unit===u;}));
@@ -616,29 +633,35 @@ function home(){
   var best=S.examBest?('השיא שלך: '+S.examBest.s+' / '+S.examBest.t):'20 שאלות מכל החומר';
   var crownS=ICON.crown.replace('width="72" height="72"','width="30" height="30"');
 
-  var page1='<div class="stack" style="gap:20px">'+heroHtml+
+  function tile(cls,href,ico,n,d){ return '<a class="tile '+cls+'" href="'+href+'"><div class="ico">'+ico+'</div><div><div class="n">'+n+'</div><div class="d">'+d+'</div></div></a>'; }
+  function wide(cls,href,ico,n,d,solid){ return '<a class="tile wide '+(solid?'solid ':'')+cls+'" href="'+href+'"><div class="ico">'+ico+'</div><div class="t"><div class="n">'+n+'</div><div class="d">'+d+'</div></div></a>'; }
+  var pMain='<div class="stack" style="gap:14px">'+heroHtml+
     '<div class="field"><label class="lbl" for="scope">מה לתרגל</label><select class="sel" id="scope">'+optHtml+'</select></div>'+
     lvBlock(wordPool())+
-    '<div class="stack-s"><h2 style="font-size:18px">מצבי תרגול</h2><div class="tiles">'+
-      '<a class="tile m-teal" href="#cards"><div class="ico">'+ICON.cards+'</div><div><div class="n">כרטיסיות</div><div class="d">לפי רמות</div></div></a>'+
-      '<a class="tile m-orange" href="#match"><div class="ico">'+ICON.match+'</div><div><div class="n">התאמה</div><div class="d">ערבית ↔ עברית</div></div></a>'+
-      '<a class="tile m-purple" href="#quiz"><div class="ico">'+ICON.quiz+'</div><div><div class="n">מבחן</div><div class="d">רב-ברירה</div></div></a>'+
-      '<a class="tile m-blue" href="#principles"><div class="ico">'+ICON.book+'</div><div><div class="n">עקרונות</div><div class="d">הסבר ודוגמאות</div></div></a>'+
-      '<a class="tile m-pink" href="#sentence"><div class="ico">'+ICON.blocks+'</div><div><div class="n">בניית משפט</div><div class="d">קוביות מילים</div></div></a>'+
-      '<button class="tile m-green" data-act="names"><div class="ico">'+ICON.pin+'</div><div><div class="n">שמות ומקומות</div><div class="d">זיהוי במבחן</div></div></button>'+
-    '</div></div>'+
-    '<a class="tile wide solid m-coral" href="#exam"><div class="ico">'+ICON.trophy+'</div><div class="t"><div class="n">מבחן כללי</div><div class="d">'+best+'</div></div></a>'+
-    '<a class="tile wide m-purple" href="#stories"><div class="ico">'+ICON.book+'</div><div class="t"><div class="n">סיפורים</div><div class="d">קצרים, בינוניים וארוכים</div></div></a>'+
-    '<a class="tile wide m-orange" href="#sunmoon"><div class="ico">'+ICON.sun+'</div><div class="t"><div class="n">אותיות שמש וירח</div><div class="d">הסבר ותרגול</div></div></a>'+
-    '<a class="tile wide m-green" href="#work"><div class="ico">'+ICON.blocks+'</div><div class="t"><div class="n">מיון והטיות</div><div class="d">קבוצות, מי לא שייך, פעלים בעבר</div></div></a>'+
-    '<a class="tile wide m-pink" href="#person"><div class="ico">'+ICON.match+'</div><div class="t"><div class="n">התאמה לגוף</div><div class="d">אני, אתה, את, הוא, היא, אנחנו, אתם, אתן, הם, הן</div></div></a>'+
-    '<a class="tile wide m-slate" href="#vocab"><div class="ico">'+ICON.search+'</div><div class="t"><div class="n">אוצר מילים</div><div class="d">חיפוש בעברית ובערבית</div></div></a>'+
+    wide('m-coral','#exam',ICON.trophy,'מבחן כללי',best,true)+
+    wide('m-purple','#stories',ICON.book,'סיפורים','קצרים, בינוניים וארוכים')+
+    '</div>';
+  var pWords='<div class="stack" style="gap:14px"><div class="muted" style="font-size:14px">תרגול מילים לפי היחידה שנבחרה בעמוד הראשי</div><div class="tiles">'+
+    tile('m-teal','#cards',ICON.cards,'כרטיסיות','לפי רמות')+
+    tile('m-orange','#match',ICON.match,'התאמה','ערבית ↔ עברית')+
+    tile('m-purple','#quiz',ICON.quiz,'מבחן','רב-ברירה')+
+    '<button class="tile m-green" data-act="names"><div class="ico">'+ICON.pin+'</div><div><div class="n">שמות ומקומות</div><div class="d">זיהוי במבחן</div></div></button>'+
+    '</div>'+
+    wide('m-slate','#vocab',ICON.search,'אוצר מילים','חיפוש בעברית ובערבית')+
+    '</div>';
+  var pGram='<div class="stack" style="gap:14px"><div class="muted" style="font-size:14px">דקדוק, הטיות ובניית משפטים</div><div class="tiles">'+
+    tile('m-blue','#principles',ICON.book,'עקרונות','הסבר ודוגמאות')+
+    tile('m-orange','#sunmoon',ICON.sun,'שמש וירח','הסבר ותרגול')+
+    tile('m-green','#work',ICON.blocks,'מיון והטיות','קבוצות ופעלים בעבר')+
+    tile('m-pink','#person',ICON.match,'התאמה לגוף','אני, אתה, הוא, אנחנו...')+
+    '</div>'+
+    wide('m-pink','#sentence',ICON.blocks,'בניית משפט','קוביות מילים')+
     '</div>';
   var wl=weakList(wordPool(),5);
   var weakHtml=wl.length?('<div class="stack-s"><h2 style="font-size:18px">מילים שכדאי לחזק</h2>'+
     '<div class="muted" style="font-size:14px">המילים שטעית בהן הכי הרבה. הן חוזרות בכרטיסיות לפני כל השאר.</div>'+weakRows(wl)+'</div>'):'';
-  var page2='<div class="stack" style="gap:20px">'+weakHtml+'<div class="stack-s"><h2 style="font-size:18px">יחידות</h2>'+
-    '<div class="muted" style="font-size:14px">בחר יחידה כדי לתרגל רק אותה. הבחירה חלה על כל מצבי התרגול.</div>'+units+'</div>'+
+  var pUnits='<div class="stack" style="gap:20px">'+weakHtml+'<div class="stack-s"><h2 style="font-size:18px">יחידות</h2>'+
+    '<div class="muted" style="font-size:14px">בחר יחידה כדי לתרגל רק אותה. הבחירה חלה על כל מצבי התרגול.</div>'+'<div class="ugrid">'+units+'</div></div>'+
     '<div class="foot">'+
       '<div>ההתקדמות נשמרת בדפדפן של הטלפון הזה, ולכל אחד יש התקדמות משלו.</div>'+
       '<div>כדי לפתוח כמו אפליקציה: בתפריט הדפדפן בחר "הוסף למסך הבית".</div>'+
@@ -650,36 +673,35 @@ function home(){
   setView('<div class="stack" style="gap:16px">'+
     '<div class="brand"><div class="crown">'+crownS+'</div><div><h1>ממלכת רוני</h1><div class="sub">ערבית ספרותית למתחילים</div></div></div>'+
     '<div class="seg tabs" role="group" aria-label="עמודים">'+
-      '<button data-act="hpage" data-v="0" aria-pressed="'+(HP===0)+'">ראשי</button>'+
-      '<button data-act="hpage" data-v="1" aria-pressed="'+(HP===1)+'">יחידות</button></div>'+
-    '<div class="pager" id="pager"><section class="pg" aria-label="ראשי">'+page1+'</section><section class="pg" aria-label="יחידות">'+page2+'</section></div>'+
+      HPAGES.map(function(n,i){ return '<button data-act="hpage" data-v="'+i+'" aria-pressed="'+(HP===i)+'">'+n+'</button>'; }).join('')+'</div>'+
+    '<div class="pager" id="pager">'+[pUnits,pGram,pWords,pMain].map(function(h,k){ var i=HPAGES.length-1-k; return '<section class="pg" data-i="'+i+'" aria-label="'+HPAGES[i]+'">'+h+'</section>'; }).join('')+'</div>'+
     '</div>');
-  pagerTo(HP,false);
+  pagerTo(HP,false); pagerFit();
+  setTimeout(pagerFit,250); if(document.fonts&&document.fonts.ready) document.fonts.ready.then(pagerFit);
 }
-var HP=0, RTLSIGN=null;
-function rtlSign(){
-  if(RTLSIGN!==null) return RTLSIGN;
-  var d=document.createElement('div'); d.dir='rtl';
-  d.style.cssText='width:50px;height:10px;overflow:scroll;position:absolute;visibility:hidden';
-  d.innerHTML='<div style="width:100px;height:1px"></div>';
-  document.body.appendChild(d); d.scrollLeft=-10;
-  RTLSIGN=d.scrollLeft<0?-1:1; document.body.removeChild(d);
-  return RTLSIGN;
-}
+var HP=0, HPAGES=['ראשי','מילים','דקדוק','יחידות'];
+/* the pager is a left-to-right scroller whose sections are stored last-first, so page 0 sits at the right edge like the tabs */
 function pagerTo(i,smooth){
   var p=document.getElementById('pager'); if(!p||!p.scrollTo) return;
-  var x=i?(p.scrollWidth-p.clientWidth):0;
-  p.scrollTo({left:x,behavior:smooth?'smooth':'auto'});
+  var N=p.children.length;
+  p.scrollTo({left:(N-1-i)*p.clientWidth,behavior:smooth?'smooth':'auto'});
 }
+/* the pager is only as tall as the page on show, so short pages do not leave empty scroll space */
+function pagerFit(){
+  var p=document.getElementById('pager'); if(!p) return;
+  var cur=p.querySelector('.pg[data-i="'+HP+'"]'); if(!cur||!cur.offsetHeight) return;
+  p.style.height=cur.offsetHeight+'px';
+}
+window.addEventListener('resize',function(){ pagerFit(); });
 function tabsSync(){
   var b=view.querySelectorAll('.tabs button');
   for(var k=0;k<b.length;k++) b[k].setAttribute('aria-pressed',String(+b[k].dataset.v===HP));
 }
-ACT.hpage=function(d){ HP=+d.v; tabsSync(); pagerTo(HP,true); };
+ACT.hpage=function(d){ HP=+d.v; tabsSync(); pagerTo(HP,true); pagerFit(); window.scrollTo(0,0); };
 view.addEventListener('scroll',function(e){
   var p=e.target; if(!p||p.id!=='pager'||!p.clientWidth) return;
-  var n=Math.round(Math.abs(p.scrollLeft)/p.clientWidth);
-  if(n!==HP&&(n===0||n===1)){ HP=n; tabsSync(); }
+  var N=p.children.length, n=N-1-Math.round(Math.abs(p.scrollLeft)/p.clientWidth);
+  if(n!==HP&&n>=0&&n<N){ HP=n; tabsSync(); pagerFit(); }
 },true);
 
 ACT.scope=function(d){ S.scope=d.v; save(); home(); window.scrollTo(0,0); };
