@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
-<title>ממלכת רוני</title>
+<title>תרגול ערבית מתחילים מתב"א</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="theme-color" content="#0E7A6F">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800&family=Noto+Naskh+Arabic:wght@400;600&family=Rubik:wght@500;600;700;800&family=Reem+Kufi:wght@500;700&display=swap">
@@ -359,6 +359,20 @@ h1,h2,h3{text-wrap:balance;font-family:var(--disp)}
 #pager .ugrid .unit .top{flex-direction:column;align-items:flex-start;gap:0}
 #pager .ugrid .unit .nm{font-size:15px;line-height:1.25}
 #pager .ugrid .unit .meta{font-size:12px}
+
+/* about / copyright disclosure on the start screen */
+.about{width:100%;max-width:460px;background:var(--surface);color:var(--ink);border-radius:16px;text-align:start;box-shadow:0 4px 0 var(--edge);margin-top:4px}
+.about summary{list-style:none;cursor:pointer;min-height:48px;padding:0 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;font-family:var(--disp);font-weight:700;font-size:16px;border-radius:16px}
+.about summary::-webkit-details-marker{display:none}
+.about summary::after{content:"";width:9px;height:9px;border-inline-end:2.5px solid currentColor;border-bottom:2.5px solid currentColor;transform:rotate(45deg);margin-top:-4px;transition:transform .18s ease;flex:none}
+.about[open] summary::after{transform:rotate(-135deg);margin-top:4px}
+.about .abt{padding:2px 16px 16px;display:flex;flex-direction:column;gap:10px;font-size:15px;line-height:1.55;color:var(--ink)}
+.about .abt p{margin:0}
+body.on-start .about :focus-visible{outline-color:var(--accent)}
+@media (prefers-reduced-motion: reduce){ .about summary::after{transition:none} }
+
+.brand h1{font-size:23px;line-height:1.15}
+.start .sub{font-size:28px}
 </style>
 
 <div id="bg" aria-hidden="true"></div>
@@ -590,9 +604,16 @@ var ACT={};
 
 function start(){
   setView('<div class="start"><div class="crown-lg">'+ICON.crown+'</div>'+
-    '<div class="stack-s" style="align-items:center"><h1>לימודי מזרח תיכון</h1><div class="sub">ממלכת רוני</div></div>'+
+    '<div class="stack-s" style="align-items:center"><h1>לימודי מזרח תיכון</h1><div class="sub">תרגול ערבית מתחילים מתב"א</div></div>'+
     '<div>ערבית ספרותית למתחילים</div>'+
-    '<a class="btn" href="#home">התחל ללמוד</a></div>',true);
+    '<a class="btn" href="#home">התחל ללמוד</a>'+
+    '<details class="about"><summary>על האתר וזכויות יוצרים</summary><div class="abt">'+
+      '<p>אתר תרגול אישי ולא רשמי. הוא אינו קשור לאוניברסיטת בר-אילן, אינו מטעמה ואינו מטעם מרצי הקורס, ואין בו שימוש מסחרי.</p>'+
+      '<p><b>מה יש כאן:</b> אוצר מילים, ביטויים וכללי דקדוק של הקורס, מנוסחים מחדש, עם מספרי עמודים מחוברת הקורס כדי שאפשר יהיה לחזור למקור. הסיפורים והתרגילים נכתבו במיוחד לאתר הזה ומשתמשים רק במילים שכבר נלמדו.</p>'+
+      '<p><b>מה אין כאן:</b> אין סריקות, אין עמודים מצולמים, אין העתק של חוברת הקורס או של כל חומר אחר, ואין חומרים של סטודנטים אחרים.</p>'+
+      '<p>ייתכנו טעויות בניקוד, בתרגום ובכללים. אין להסתמך על האתר כתחליף לשיעור או לחוברת הקורס. בעל זכויות שסבור שתוכן כאן פוגע בזכויותיו מוזמן לפנות, והתוכן יוסר מיד.</p>'+
+      '</div></details>'+
+    '</div>',true);
 }
 
 var confirmReset=false;
@@ -671,7 +692,7 @@ function home(){
     '</div></div>';
 
   setView('<div class="stack" style="gap:16px">'+
-    '<div class="brand"><div class="crown">'+crownS+'</div><div><h1>ממלכת רוני</h1><div class="sub">ערבית ספרותית למתחילים</div></div></div>'+
+    '<div class="brand"><div class="crown">'+crownS+'</div><div><h1>תרגול ערבית מתחילים מתב"א</h1><div class="sub">ערבית ספרותית למתחילים</div></div></div>'+
     '<div class="seg tabs" role="group" aria-label="עמודים">'+
       HPAGES.map(function(n,i){ return '<button data-act="hpage" data-v="'+i+'" aria-pressed="'+(HP===i)+'">'+n+'</button>'; }).join('')+'</div>'+
     '<div class="pager" id="pager">'+[pUnits,pGram,pWords,pMain].map(function(h,k){ var i=HPAGES.length-1-k; return '<section class="pg" data-i="'+i+'" aria-label="'+HPAGES[i]+'">'+h+'</section>'; }).join('')+'</div>'+
